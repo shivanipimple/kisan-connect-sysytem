@@ -1,0 +1,596 @@
+{% extends 'app/base.html' %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+.od-wrap { background: #f4f6f0; min-height: 100vh; padding: 36px 0 60px; }
+
+.back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #4a7c59; font-weight: 600; font-size: 14px;
+    text-decoration: none; margin-bottom: 28px; transition: gap .2s;
+}
+.back-link:hover { gap: 10px; color: #2d5a3d; }
+
+/* Header */
+.order-header {
+    background: linear-gradient(135deg, #2d5a3d 0%, #4a7c59 60%, #6aab7a 100%);
+    border-radius: 20px; padding: 30px 32px; color: #fff;
+    margin-bottom: 24px; position: relative; overflow: hidden;
+}
+.order-header::before {
+    content: '🌿'; font-size: 120px; position: absolute;
+    right: -20px; top: -20px; opacity: .08; line-height: 1;
+}
+.order-header h2 { font-size: 26px; font-weight: 800; margin: 0 0 6px; }
+.order-header p  { margin: 0; opacity: .85; font-size: 14px; }
+.status-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 999px; padding: 5px 16px; font-size: 13px; font-weight: 700;
+    backdrop-filter: blur(4px); margin-top: 12px;
+}
+
+/* Cards */
+.info-card {
+    background: #fff; border-radius: 18px; padding: 28px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06); margin-bottom: 22px;
+}
+.card-title {
+    font-size: 16px; font-weight: 700; color: #1a2e1f;
+    margin-bottom: 22px; display: flex; align-items: center; gap: 8px;
+}
+.card-title .icon {
+    width: 32px; height: 32px; background: #eef5f0; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+
+/* ── Tracking ── */
+.tracking-wrap { position: relative; }
+
+.tracking-steps {
+    display: flex; justify-content: space-between;
+    position: relative; margin-bottom: 0; padding-bottom: 0;
+}
+/* grey rail behind dots */
+.tracking-steps::before {
+    content: ''; position: absolute; top: 20px; left: 20px; right: 20px;
+    height: 3px; background: #e0e9e3; z-index: 0; border-radius: 2px;
+}
+/* green progress rail — width set by JS */
+.progress-bar-fill {
+    position: absolute; top: 20px; left: 20px; height: 3px;
+    background: linear-gradient(90deg, #2d5a3d, #6aab7a);
+    z-index: 1; border-radius: 2px;
+    width: 0%; transition: width 1s ease;
+}
+
+.track-step {
+    display: flex; flex-direction: column; align-items: center;
+    z-index: 2; flex: 1;
+}
+.track-dot {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; border: 3px solid #e0e9e3;
+    background: #fff; transition: all .4s;
+}
+.track-dot.done {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+    border-color: #4a7c59; color: #fff;
+    box-shadow: 0 0 0 5px rgba(74,124,89,.15);
+}
+/* last done dot pulses */
+.track-dot.done.pulse { animation: pulse-dot 2s infinite; }
+.track-dot.future { background: #f4f6f0; border-color: #d5ddd8; color: #b0bdb5; }
+
+@keyframes pulse-dot {
+    0%,100% { box-shadow: 0 0 0 5px rgba(74,124,89,.15); }
+    50%      { box-shadow: 0 0 0 10px rgba(74,124,89,.07); }
+}
+
+.track-label {
+    font-size: 11px; font-weight: 700; margin-top: 8px;
+    text-align: center; color: #4a7c59;
+}
+.track-label.grey { color: #b0bdb5; }
+.track-date {
+    font-size: 10px; color: #6c757d; text-align: center;
+    margin-top: 3px; line-height: 1.5;
+}
+.track-date .dim { color: #c0c8c2; }
+
+/* Delivery banner */
+.delivery-banner {
+    background: linear-gradient(90deg,#eef5f0,#d4edda);
+    border-radius: 12px; padding: 14px 20px;
+    border-left: 4px solid #4a7c59; margin-bottom: 22px;
+    display: flex; align-items: center; gap: 12px;
+}
+.delivery-banner .est-icon { font-size: 26px; }
+.delivery-banner .est-text { font-size: 13px; color: #2d5a3d; }
+.delivery-banner .est-date { font-size: 16px; font-weight: 800; color: #1a2e1f; }
+
+/* Payment */
+.pay-row {
+    display: flex; justify-content: space-between;
+    align-items: center; padding: 9px 0;
+}
+.pay-row:not(:last-child) { border-bottom: 1px solid #f0f3f1; }
+.pay-label { font-size: 14px; color: #6c757d; }
+.pay-value { font-size: 14px; font-weight: 600; color: #1a2e1f; }
+.pay-total .pay-label { font-size: 15px; font-weight: 700; color: #1a2e1f; }
+.pay-total .pay-value { font-size: 18px; font-weight: 800; color: #2d5a3d; }
+.badge-paid   { background:#d4edda; color:#155724; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; }
+.badge-unpaid { background:#fff3cd; color:#856404; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; }
+
+/* Items table */
+.items-table { width:100%; border-collapse:collapse; }
+.items-table thead th {
+    font-size:11px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.5px; color:#6c757d; padding:0 8px 10px;
+    border-bottom:2px solid #f0f3f1;
+}
+.items-table tbody td {
+    padding:12px 8px; border-bottom:1px solid #f4f6f0;
+    font-size:14px; vertical-align:middle;
+}
+.review-btn {
+    background:linear-gradient(135deg,#4a7c59,#6aab7a);
+    border:none; color:#fff; border-radius:999px;
+    padding:5px 14px; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.review-btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(74,124,89,.3); }
+.reviewed-badge {
+    background:#e0e9e3; color:#6aab7a; border-radius:999px;
+    padding:5px 14px; font-size:12px; font-weight:600; display:inline-block;
+}
+
+/* Reviews section */
+.review-section { margin-top: 32px; }
+.review-card {
+    background:#fff; border-radius:16px; padding:22px 26px;
+    box-shadow:0 2px 12px rgba(0,0,0,.05); margin-bottom:14px;
+    border-left:4px solid #6aab7a;
+}
+.review-meta { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.reviewer-avatar {
+    width:38px; height:38px; border-radius:50%;
+    background:linear-gradient(135deg,#4a7c59,#6aab7a);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:15px; flex-shrink:0;
+}
+.reviewer-name    { font-weight:700; font-size:14px; color:#1a2e1f; }
+.reviewer-product { font-size:12px; color:#6c757d; }
+.star-display     { color:#f0a500; font-size:15px; }
+.review-comment   { font-size:14px; color:#374843; line-height:1.6; margin-top:6px; }
+.review-date      { font-size:11px; color:#adb5bd; margin-top:6px; }
+
+/* Modal */
+.review-modal .modal-content {
+    border-radius:20px; border:none; box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.review-modal .modal-header {
+    background:linear-gradient(135deg,#2d5a3d,#4a7c59);
+    border-radius:20px 20px 0 0; color:#fff; border:none; padding:20px 24px;
+}
+.review-modal .modal-title { font-weight:800; font-size:18px; }
+.review-modal .btn-close { filter:brightness(0) invert(1); }
+
+.star-rating { display:flex; gap:6px; flex-direction:row-reverse; justify-content:flex-end; }
+.star-rating input { display:none; }
+.star-rating label { font-size:32px; color:#ddd; cursor:pointer; transition:color .15s,transform .15s; }
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label { color:#f0a500; transform:scale(1.1); }
+
+.form-control-kisan {
+    border:2px solid #e0e9e3; border-radius:10px; padding:10px 14px;
+    font-size:14px; transition:border-color .2s; width:100%; box-sizing:border-box;
+}
+.form-control-kisan:focus { border-color:#4a7c59; outline:none; box-shadow:0 0 0 3px rgba(74,124,89,.1); }
+
+.btn-submit-review {
+    background:linear-gradient(135deg,#2d5a3d,#6aab7a);
+    border:none; color:#fff; border-radius:12px; padding:12px;
+    font-weight:700; font-size:15px; width:100%; transition:all .2s; cursor:pointer;
+}
+.btn-submit-review:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(45,90,61,.3); }
+</style>
+
+
+<div class="od-wrap">
+<div class="container">
+
+    <a href="{% url 'my_orders' %}" class="back-link">← Back to My Orders</a>
+
+    <!-- ── ORDER HEADER ── -->
+    <div class="order-header">
+        <h2>Order #{{ order.id }}</h2>
+        <p>Placed on {{ order.order_date|date:"d M Y, g:i A" }} &nbsp;·&nbsp; {{ order.full_name }}</p>
+        <div class="status-pill">
+            {% if order.status == 'Delivered' or order.status == 'PickedUp' %}
+                ✅
+            {% elif order.status == 'Cancelled' %}
+                ❌
+            {% elif order.status == 'Shipped' %}
+                🚚
+            {% elif order.status == 'Packed' %}
+                📦
+            {% else %}
+                🕐
+            {% endif %}
+            &nbsp;{{ order.get_status_display|default:order.status }}
+        </div>
+    </div>
+
+    <!-- ── ESTIMATED DELIVERY BANNER ── -->
+    {% if not is_pickup and order.status != 'Delivered' and order.status != 'Cancelled' %}
+    <div class="delivery-banner">
+        <span class="est-icon">🚚</span>
+        <div>
+            <div class="est-text">Estimated Delivery</div>
+            <div class="est-date">{{ estimated_delivery|date:"d M Y, l" }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <div class="row g-4">
+
+        <!-- ══════════ LEFT COLUMN ══════════ -->
+        <div class="col-lg-7">
+
+            <!-- ── STANDARD DELIVERY TRACKING ── -->
+            {% if not is_pickup %}
+            <div class="info-card">
+                <div class="card-title"><span class="icon">📍</span> Live Order Tracking</div>
+
+                <div class="tracking-wrap">
+                    <div class="tracking-steps" id="trackSteps">
+
+                        <!-- STEP 1 · Ordered — always done -->
+                        <div class="track-step">
+                            <div class="track-dot done" id="dot-ordered">🛒</div>
+                            <div class="track-label">Ordered</div>
+                            <div class="track-date">
+                                {% if history_dict.Ordered %}
+                                    {{ history_dict.Ordered|date:"d M Y" }}<br>{{ history_dict.Ordered|date:"g:i A" }}
+                                {% else %}
+                                    {{ order.order_date|date:"d M Y" }}<br>{{ order.order_date|date:"g:i A" }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- STEP 2 · Packed -->
+                        <div class="track-step">
+                            {% if history_dict.Packed %}
+                                <div class="track-dot done" id="dot-packed">📦</div>
+                                <div class="track-label">Packed</div>
+                                <div class="track-date">
+                                    {{ history_dict.Packed|date:"d M Y" }}<br>{{ history_dict.Packed|date:"g:i A" }}
+                                </div>
+                            {% else %}
+                                {% if order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' %}
+                                    <div class="track-dot done" id="dot-packed">📦</div>
+                                    <div class="track-label">Packed</div>
+                                {% else %}
+                                    <div class="track-dot future" id="dot-packed">📦</div>
+                                    <div class="track-label grey">Packed</div>
+                                {% endif %}
+                                <div class="track-date"><span class="dim">Pending</span></div>
+                            {% endif %}
+                        </div>
+
+                        <!-- STEP 3 · Shipped -->
+                        <div class="track-step">
+                            {% if history_dict.Shipped %}
+                                <div class="track-dot done" id="dot-shipped">🚚</div>
+                                <div class="track-label">Shipped</div>
+                                <div class="track-date">
+                                    {{ history_dict.Shipped|date:"d M Y" }}<br>{{ history_dict.Shipped|date:"g:i A" }}
+                                </div>
+                            {% else %}
+                                {% if order.status == 'Shipped' or order.status == 'Delivered' %}
+                                    <div class="track-dot done" id="dot-shipped">🚚</div>
+                                    <div class="track-label">Shipped</div>
+                                {% else %}
+                                    <div class="track-dot future" id="dot-shipped">🚚</div>
+                                    <div class="track-label grey">Shipped</div>
+                                {% endif %}
+                                <div class="track-date"><span class="dim">Pending</span></div>
+                            {% endif %}
+                        </div>
+
+                        <!-- STEP 4 · Delivered -->
+                        <div class="track-step">
+                            {% if history_dict.Delivered or order.status == 'Delivered' %}
+                                <div class="track-dot done" id="dot-delivered">✅</div>
+                                <div class="track-label">Delivered</div>
+                                <div class="track-date">
+                                    {% if history_dict.Delivered %}
+                                        {{ history_dict.Delivered|date:"d M Y" }}<br>{{ history_dict.Delivered|date:"g:i A" }}
+                                    {% else %}
+                                        {{ order.order_date|date:"d M Y" }}
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <div class="track-dot future" id="dot-delivered">✅</div>
+                                <div class="track-label grey">Delivered</div>
+                                <div class="track-date">
+                                    <span class="dim">Est. {{ estimated_delivery|date:"d M Y" }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    </div><!-- /tracking-steps -->
+
+                    <!-- Green progress rail (width set by JS) -->
+                    <div class="progress-bar-fill" id="progressFill"></div>
+
+                </div><!-- /tracking-wrap -->
+            </div>
+
+            {% else %}
+            <!-- ── SELF PICKUP TRACKING ── -->
+            <div class="info-card">
+                <div class="card-title"><span class="icon">🏪</span> Self Pickup Tracking</div>
+                <div class="tracking-wrap">
+                    <div class="tracking-steps">
+
+                        <div class="track-step">
+                            <div class="track-dot done">🛒</div>
+                            <div class="track-label">Ordered</div>
+                            <div class="track-date">{{ order.order_date|date:"d M, g:i A" }}</div>
+                        </div>
+
+                        <div class="track-step">
+                            {% if order.status == 'ReadyForPickup' or order.status == 'PickedUp' %}
+                                <div class="track-dot done">🏪</div>
+                                <div class="track-label">Ready</div>
+                            {% else %}
+                                <div class="track-dot future">🏪</div>
+                                <div class="track-label grey">Ready</div>
+                            {% endif %}
+                            <div class="track-date">
+                                {% if history_dict.ReadyForPickup %}
+                                    {{ history_dict.ReadyForPickup|date:"d M, g:i A" }}
+                                {% else %}
+                                    <span class="dim">Soon</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="track-step">
+                            {% if order.status == 'PickedUp' %}
+                                <div class="track-dot done">✅</div>
+                                <div class="track-label">Picked Up</div>
+                            {% else %}
+                                <div class="track-dot future">✅</div>
+                                <div class="track-label grey">Picked Up</div>
+                            {% endif %}
+                            <div class="track-date">
+                                {% if history_dict.PickedUp %}
+                                    {{ history_dict.PickedUp|date:"d M, g:i A" }}
+                                {% else %}
+                                    <span class="dim">—</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="progress-bar-fill" id="progressFill"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ── DELIVERY ADDRESS ── -->
+            <div class="info-card">
+                <div class="card-title"><span class="icon">🏠</span> Delivery Address</div>
+                <p class="mb-1" style="font-weight:600;color:#1a2e1f;">{{ order.full_name }}</p>
+                <p class="mb-1 text-muted small">{{ order.address }}</p>
+                <p class="mb-1 text-muted small">
+                    {{ order.city }}{% if order.pincode %} – {{ order.pincode }}{% endif %}
+                </p>
+                <p class="mb-0 text-muted small">📞 {{ order.mobile }}</p>
+            </div>
+
+        </div><!-- /col-lg-7 -->
+
+
+        <!-- ══════════ RIGHT COLUMN ══════════ -->
+        <div class="col-lg-5">
+
+            <!-- ── PAYMENT SUMMARY ── -->
+            <div class="info-card">
+                <div class="card-title"><span class="icon">💳</span> Payment Summary</div>
+                <div class="pay-row">
+                    <span class="pay-label">Payment Method</span>
+                    <span class="pay-value" style="text-transform:uppercase;">{{ order.payment_method }}</span>
+                </div>
+                <div class="pay-row">
+                    <span class="pay-label">Payment Status</span>
+                    <span class="{% if order.payment_status == 'Paid' %}badge-paid{% else %}badge-unpaid{% endif %}">
+                        {{ order.payment_status }}
+                    </span>
+                </div>
+                {% if transaction %}
+                <div class="pay-row">
+                    <span class="pay-label">Transaction ID</span>
+                    <span class="pay-value" style="font-size:11px;font-family:monospace;">{{ transaction.transaction_id }}</span>
+                </div>
+                {% endif %}
+                <div class="pay-row pay-total" style="margin-top:8px;padding-top:12px;border-top:2px solid #eef5f0;">
+                    <span class="pay-label">Total Amount</span>
+                    <span class="pay-value">₹{{ order.total_amount }}</span>
+                </div>
+            </div>
+
+            <!-- ── ORDERED ITEMS ── -->
+            <div class="info-card">
+                <div class="card-title"><span class="icon">🛍</span> Ordered Items</div>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th style="text-align:center;">Qty</th>
+                            <th style="text-align:right;">Price</th>
+                            {% if order.status == 'Delivered' %}
+                            <th style="text-align:center;">Review</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items_list %}
+                        <tr>
+                            <td style="font-weight:600;color:#1a2e1f;">{{ item.name }}</td>
+                            <td style="text-align:center;color:#6c757d;">× {{ item.quantity }}</td>
+                            <td style="text-align:right;font-weight:700;color:#2d5a3d;">₹{{ item.price }}</td>
+                            {% if order.status == 'Delivered' %}
+                            <td style="text-align:center;">
+                                {% if item.already_reviewed %}
+                                    <span class="reviewed-badge">✅ Done</span>
+                                {% else %}
+                                    {% if item.product_id %}
+                                        <button class="review-btn"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#reviewModal{{ forloop.counter }}">
+                                            ⭐ Review
+                                        </button>
+                                    {% else %}
+                                        <span class="reviewed-badge" style="color:#aaa;">N/A</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div><!-- /col-lg-5 -->
+    </div><!-- /row -->
+
+
+    <!-- ── REVIEWS ALREADY SUBMITTED ── -->
+    {% if existing_reviews %}
+    <div class="review-section">
+        <h5 style="font-weight:800;color:#1a2e1f;margin-bottom:18px;">⭐ Your Reviews for This Order</h5>
+        {% for review in existing_reviews %}
+        <div class="review-card">
+            <div class="review-meta">
+                <div class="reviewer-avatar">
+                    {{ review.user.first_name|first|upper }}{{ review.user.last_name|first|upper }}
+                </div>
+                <div>
+                    <div class="reviewer-name">{{ review.user.get_full_name|default:review.user.username }}</div>
+                    <div class="reviewer-product">{{ review.product.name }}</div>
+                </div>
+                <div class="ms-auto">
+                    <div class="star-display">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <p class="review-comment">{{ review.comment }}</p>
+            <div class="review-date">{{ review.created_at|date:"d M Y, g:i A" }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div><!-- /container -->
+</div><!-- /od-wrap -->
+
+
+<!-- ══════════ REVIEW MODALS ══════════ -->
+{% if order.status == 'Delivered' %}
+    {% for item in items_list %}
+        {% if item.product_id %}
+            {% if not item.already_reviewed %}
+            <div class="modal fade review-modal" id="reviewModal{{ forloop.counter }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">⭐ Review: {{ item.name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <form method="POST" action="{% url 'add_review' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                                <input type="hidden" name="order_id"   value="{{ order.id }}">
+
+                                <div class="mb-4">
+                                    <label style="font-weight:700;color:#1a2e1f;display:block;margin-bottom:10px;">
+                                        Your Rating
+                                    </label>
+                                    <div class="star-rating">
+                                        <input type="radio" id="s5_{{ forloop.counter }}" name="rating" value="5">
+                                        <label for="s5_{{ forloop.counter }}">★</label>
+                                        <input type="radio" id="s4_{{ forloop.counter }}" name="rating" value="4">
+                                        <label for="s4_{{ forloop.counter }}">★</label>
+                                        <input type="radio" id="s3_{{ forloop.counter }}" name="rating" value="3" checked>
+                                        <label for="s3_{{ forloop.counter }}">★</label>
+                                        <input type="radio" id="s2_{{ forloop.counter }}" name="rating" value="2">
+                                        <label for="s2_{{ forloop.counter }}">★</label>
+                                        <input type="radio" id="s1_{{ forloop.counter }}" name="rating" value="1">
+                                        <label for="s1_{{ forloop.counter }}">★</label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label style="font-weight:700;color:#1a2e1f;display:block;margin-bottom:8px;">
+                                        Your Comment
+                                    </label>
+                                    <textarea name="comment" class="form-control-kisan" rows="4"
+                                        placeholder="Share your experience with this product..."
+                                        required></textarea>
+                                </div>
+
+                                <button type="submit" class="btn-submit-review">Submit Review ✅</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    /* ── progress bar ── */
+    const fill     = document.getElementById('progressFill');
+    const status   = "{{ order.status }}";
+    const isPickup = {{ is_pickup|yesno:"true,false" }};
+
+    let pct = 5;
+    if (isPickup) {
+        if (status === 'ReadyForPickup') pct = 50;
+        else if (status === 'PickedUp')  pct = 100;
+    } else {
+        if      (status === 'Packed')    pct = 33;
+        else if (status === 'Shipped')   pct = 66;
+        else if (status === 'Delivered') pct = 100;
+    }
+    if (fill) setTimeout(() => { fill.style.width = pct + '%'; }, 300);
+
+    /* ── pulse the last completed dot ── */
+    const doneDots = document.querySelectorAll('.track-dot.done');
+    if (doneDots.length) {
+        doneDots[doneDots.length - 1].classList.add('pulse');
+    }
+});
+</script>
+
+{% endblock %}

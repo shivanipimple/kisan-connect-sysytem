@@ -1,0 +1,286 @@
+{% extends 'app/admin/base.html' %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+.page-header { margin-bottom: 28px; }
+.page-header h2 { font-size: 26px; font-weight: 800; color: #1a2e1f; margin: 0; }
+.page-header p { color: #6c757d; font-size: 14px; margin: 4px 0 0; }
+
+/* Stat Cards */
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 28px; }
+.stat-card {
+    background: #fff; border-radius: 16px; padding: 22px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06); border: none;
+    display: flex; align-items: center; gap: 16px;
+}
+.stat-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+}
+.stat-icon.green { background: #eef5f0; }
+.stat-icon.yellow { background: #fff8e1; }
+.stat-icon.blue { background: #e8f4fd; }
+.stat-num { font-size: 24px; font-weight: 800; color: #1a2e1f; line-height: 1; }
+.stat-lbl { font-size: 12px; color: #6c757d; margin-top: 3px; }
+
+/* Filter Bar */
+.filter-bar {
+    background: #fff; border-radius: 14px; padding: 18px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05); margin-bottom: 22px;
+    display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;
+}
+.filter-bar label { font-size: 12px; font-weight: 700; color: #4a7c59; display: block; margin-bottom: 5px; }
+.filter-control {
+    border: 2px solid #e0e9e3; border-radius: 10px; padding: 8px 14px;
+    font-size: 13px; color: #1a2e1f; background: #f9fbf9;
+    transition: border-color .2s; min-width: 160px;
+}
+.filter-control:focus { border-color: #4a7c59; outline: none; }
+.btn-filter {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59); color: #fff;
+    border: none; border-radius: 10px; padding: 9px 20px;
+    font-weight: 700; font-size: 13px; cursor: pointer; transition: all .2s;
+}
+.btn-filter:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(45,90,61,.3); }
+.btn-reset {
+    background: #f4f6f0; color: #4a7c59; border: 2px solid #e0e9e3;
+    border-radius: 10px; padding: 9px 18px;
+    font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center;
+}
+
+/* Table */
+.reviews-table-wrap {
+    background: #fff; border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06); overflow: hidden;
+}
+.reviews-table { width: 100%; border-collapse: collapse; }
+.reviews-table thead {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+}
+.reviews-table thead th {
+    color: #fff; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .5px;
+    padding: 14px 16px; white-space: nowrap;
+}
+.reviews-table tbody tr {
+    border-bottom: 1px solid #f0f3f1; transition: background .15s;
+}
+.reviews-table tbody tr:hover { background: #f9fbf9; }
+.reviews-table tbody td { padding: 14px 16px; vertical-align: middle; font-size: 13px; }
+
+/* User Cell */
+.user-cell { display: flex; align-items: center; gap: 10px; }
+.user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #4a7c59, #6aab7a);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 13px; flex-shrink: 0;
+}
+.user-name { font-weight: 600; color: #1a2e1f; font-size: 13px; }
+.user-email { font-size: 11px; color: #6c757d; }
+
+/* Product badge */
+.product-badge {
+    background: #eef5f0; color: #2d5a3d; border-radius: 8px;
+    padding: 4px 10px; font-size: 12px; font-weight: 600; display: inline-block;
+}
+
+/* Stars */
+.stars { color: #f0a500; font-size: 16px; letter-spacing: 1px; white-space: nowrap; }
+.stars-grey { color: #e0e0e0; }
+
+/* Rating badge */
+.rating-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+}
+.r5 { background: #d4edda; color: #155724; }
+.r4 { background: #d4edda; color: #155724; }
+.r3 { background: #fff3cd; color: #856404; }
+.r2 { background: #fde8e8; color: #721c24; }
+.r1 { background: #fde8e8; color: #721c24; }
+
+/* Comment */
+.comment-text { max-width: 260px; color: #374843; line-height: 1.5; font-size: 13px; }
+
+/* Order link */
+.order-link {
+    color: #4a7c59; font-weight: 700; text-decoration: none;
+    font-size: 12px; font-family: monospace;
+}
+.order-link:hover { color: #2d5a3d; text-decoration: underline; }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 60px 20px; color: #adb5bd; }
+.empty-state .e-icon { font-size: 56px; margin-bottom: 12px; }
+.empty-state p { font-size: 16px; font-weight: 600; }
+
+/* Pagination */
+.kisan-pagination { display: flex; gap: 6px; justify-content: center; margin-top: 24px; }
+.kisan-pagination a, .kisan-pagination span {
+    padding: 7px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    text-decoration: none; transition: all .15s;
+}
+.kisan-pagination a { background: #eef5f0; color: #2d5a3d; }
+.kisan-pagination a:hover { background: #4a7c59; color: #fff; }
+.kisan-pagination .current { background: linear-gradient(135deg, #2d5a3d, #4a7c59); color: #fff; }
+</style>
+
+<div class="page-header">
+    <h2>⭐ Customer Reviews & Ratings</h2>
+    <p>All product reviews submitted by customers after delivery</p>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-icon green">⭐</div>
+        <div>
+            <div class="stat-num">{{ avg_rating }}</div>
+            <div class="stat-lbl">Avg. Rating</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon yellow">📝</div>
+        <div>
+            <div class="stat-num">{{ total_reviews }}</div>
+            <div class="stat-lbl">Total Reviews</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue">🛍</div>
+        <div>
+            <div class="stat-num">{{ products.count }}</div>
+            <div class="stat-lbl">Products Reviewed</div>
+        </div>
+    </div>
+</div>
+
+<!-- FILTER BAR -->
+<form method="GET" class="filter-bar">
+    <div>
+        <label>Filter by Rating</label>
+        <select name="rating" class="filter-control">
+            <option value="">All Ratings</option>
+            {% for s in star_range %}
+            <option value="{{ s }}" {% if rating_filter == s|stringformat:"s" %}selected{% endif %}>{{ s }} Star{% if s > 1 %}s{% endif %}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label>Filter by Product</label>
+        <select name="product" class="filter-control">
+            <option value="">All Products</option>
+            {% for p in products %}
+            <option value="{{ p.id }}" {% if product_filter == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label>&nbsp;</label>
+        <button type="submit" class="btn-filter">🔍 Filter</button>
+    </div>
+    <div>
+        <label>&nbsp;</label>
+        <a href="{% url 'rating_list' %}" class="btn-reset">✕ Reset</a>
+    </div>
+</form>
+
+<!-- REVIEWS TABLE -->
+<div class="reviews-table-wrap">
+    {% if page_obj.object_list %}
+    <table class="reviews-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Rating</th>
+                <th>Comment</th>
+                <th>Order</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in page_obj %}
+            <tr>
+                <td style="font-weight:700;color:#adb5bd;">{{ forloop.counter }}</td>
+
+                <!-- Customer -->
+                <td>
+                    <div class="user-cell">
+                        <div class="user-avatar">
+                            {{ review.user.first_name|first|upper }}{{ review.user.last_name|first|upper }}
+                        </div>
+                        <div>
+                            <div class="user-name">{{ review.user.get_full_name|default:review.user.username }}</div>
+                            <div class="user-email">{{ review.user.email }}</div>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Product -->
+                <td><span class="product-badge">{{ review.product.name }}</span></td>
+
+                <!-- Rating -->
+                <td>
+                    <span class="rating-badge r{{ review.rating }}">
+                        {% for i in star_range %}{% if i <= review.rating %}★{% endif %}{% endfor %}
+                        {{ review.rating }}/5
+                    </span>
+                </td>
+
+                <!-- Comment -->
+                <td><div class="comment-text">{{ review.comment|truncatechars:100 }}</div></td>
+
+                <!-- Order -->
+                <td>
+                    <a href="{% url 'admin_order_detail' review.order.id %}" class="order-link">
+                        #{{ review.order.id }}
+                    </a>
+                </td>
+
+                <!-- Date -->
+                <td style="color:#6c757d;font-size:12px;white-space:nowrap;">
+                    {{ review.created_at|date:"d M Y" }}<br>
+                    <span style="color:#adb5bd;">{{ review.created_at|date:"g:i A" }}</span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="e-icon">⭐</div>
+        <p>No reviews found</p>
+        <small>Reviews will appear here once customers submit them after delivery</small>
+    </div>
+    {% endif %}
+</div>
+
+<!-- PAGINATION -->
+{% if page_obj.has_other_pages %}
+<div class="kisan-pagination">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}&rating={{ rating_filter }}&product={{ product_filter }}">← Prev</a>
+    {% endif %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="current">{{ num }}</span>
+        {% else %}
+        <a href="?page={{ num }}&rating={{ rating_filter }}&product={{ product_filter }}">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}&rating={{ rating_filter }}&product={{ product_filter }}">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

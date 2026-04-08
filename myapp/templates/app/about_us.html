@@ -1,0 +1,206 @@
+{% extends 'app/base.html' %}
+{% load static %}
+{% block content %}
+
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; }
+
+.about-wrap { background: #fdfdfb; overflow-x: hidden; padding-bottom: 100px; }
+
+/* Interactive Header */
+.about-header {
+    background: linear-gradient(135deg, #1e3d29 0%, #2d5a3d 50%, #4a7c59 100%);
+    border-radius: 0 0 50px 50px; padding: 100px 20px; color: #fff;
+    margin-bottom: 60px; position: relative; text-align: center;
+}
+
+/* Glassmorphism Info Cards */
+.about-card {
+    background: #fff; border-radius: 24px; padding: 35px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05); height: 100%;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+.about-card:hover { transform: translateY(-10px); box-shadow: 0 20px 50px rgba(45, 90, 61, 0.1); }
+
+/* High-Impact Shop Photo */
+.shop-container { position: relative; border-radius: 30px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+.shop-img { width: 100%; height: 500px; object-fit: cover; }
+.shop-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    padding: 40px; color: #fff;
+}
+
+/* 4-Person Testimonial Grid */
+.t-grid-card {
+    background: #fff; padding: 30px; border-radius: 20px;
+    border-bottom: 5px solid #2d5a3d; position: relative; height: 100%;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+.t-avatar {
+    width: 60px; height: 60px; border-radius: 15px;
+    background: linear-gradient(135deg, #2d5a3d, #6aab7a); 
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #fff; margin-bottom: 15px; font-size: 20px;
+}
+
+/* FAQ Accordion Styling */
+.accordion-item { border-radius: 15px !important; border: none; margin-bottom: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.accordion-button:not(.collapsed) { background-color: #eef5f0; color: #2d5a3d; box-shadow: none; }
+
+.section-tag {
+    display: inline-block; background: #eef5f0; color: #2d5a3d;
+    padding: 5px 15px; border-radius: 50px; font-size: 12px;
+    font-weight: 700; text-transform: uppercase; margin-bottom: 15px;
+}
+</style> 
+
+<div class="about-wrap">
+    <div class="about-header" data-aos="zoom-out">
+        <h1 class="display-4 fw-bold">Rooted in Trust</h1>
+        <p class="lead opacity-75">Empowering Farmers. Freshness Delivered. Community Driven.</p>
+    </div> 
+
+    <div class="container">
+        <div class="row g-5 align-items-center mb-5 pb-5">
+            <div class="col-lg-6" data-aos="fade-right">
+                <div class="shop-container">
+                    <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=80" class="shop-img" alt="KisanConnect Hub">
+                    <div class="shop-overlay">
+                        <h3>Our Physical Hub</h3>
+                        <p>Where quality checks and community meet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6" data-aos="fade-left">
+                <span class="section-tag">Our Mission</span>
+                <h2 class="fw-bold mb-4">Bridging the Gap Between <span style="color: #2d5a3d;">Soil & Soul</span></h2>
+                <p class="text-muted mb-4" style="font-size: 18px; line-height: 1.8;">
+                    KisanConnect isn't just an e-commerce platform; it's a movement. We've optimized the supply chain to ensure the farmer who sweats in the field gets the reward, and you get the nutrients you deserve.
+                </p>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="p-3 border-start border-4 border-success bg-white shadow-sm">
+                            <h6 class="mb-0 fw-bold">100% Direct</h6>
+                            <small class="text-muted">No Middlemen</small>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="p-3 border-start border-4 border-success bg-white shadow-sm">
+                            <h6 class="mb-0 fw-bold">Eco-Friendly</h6>
+                            <small class="text-muted">Low Waste</small>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-5" data-aos="fade-up">
+            <span class="section-tag">Testimonials</span>
+            <h2 class="fw-bold">Voices from the Field</h2>
+        </div>
+        
+        <div class="row g-4 mb-5 pb-5">
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="t-grid-card">
+                    <div class="t-avatar">RP</div>
+                    <p class="small text-muted mb-3">"Fair prices and zero transport stress. My income grew 40%."</p>
+                    <h6 class="fw-bold mb-0">Rajesh Patil</h6>
+                    <small class="text-success">Organic Grower</small>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="t-grid-card">
+                    <div class="t-avatar">SD</div>
+                    <p class="small text-muted mb-3">"KisanConnect saved my harvest by reaching families directly."</p>
+                    <h6 class="fw-bold mb-0">Sunita D.</h6>
+                    <small class="text-success">Fruit Specialist</small>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="t-grid-card">
+                    <div class="t-avatar">AK</div>
+                    <p class="small text-muted mb-3">"Fast payments help me buy high-quality seeds on time."</p>
+                    <h6 class="fw-bold mb-0">Anil Kumar</h6>
+                    <small class="text-success">Grains Partner</small>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="t-grid-card">
+                    <div class="t-avatar">MB</div>
+                    <p class="small text-muted mb-3">"The most transparent system I've used in 20 years."</p>
+                    <h6 class="fw-bold mb-0">Meera Bai</h6>
+                    <small class="text-success">Dairy Expert</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center py-5">
+            <div class="col-lg-8" data-aos="fade-up">
+                <div class="text-center mb-5">
+                    <span class="section-tag">FAQ</span>
+                    <h2 class="fw-bold">Common Questions</h2>
+                </div>
+                
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item shadow-sm">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#q1">
+                                How do I know the produce is fresh?
+                            </button>
+                        </h2>
+                        <div id="q1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                We track every batch from harvest. Most items reach our hub and your kitchen within 18-24 hours.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item shadow-sm">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q2">
+                                Do you support organic farming?
+                            </button>
+                        </h2>
+                        <div id="q2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Yes! We have a dedicated section for certified organic farmers and encourage natural practices through workshops.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item shadow-sm">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q3">
+                                Can I visit the farms?
+                            </button>
+                        </h2>
+                        <div id="q3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Absolutely. We organize quarterly "Farm-Walks" so you can see exactly where your food comes from.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Scroll Animations
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+{% endblock %}

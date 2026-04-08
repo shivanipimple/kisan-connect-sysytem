@@ -1,0 +1,241 @@
+{% extends 'app/admin/base.html' %} 
+{% block content %}
+<div class="content-body">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-success">Inventory Management</h2>
+            <p class="text-muted">Manage your KisanConnect product catalog</p>
+        </div>
+        <button class="btn btn-success px-4 py-2 rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
+            <i class="fa fa-plus me-2"></i> Add New Product
+        </button>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm" style="border-radius: 15px;">
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Image</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Weight</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" width="50" height="50" class="rounded shadow-sm" style="object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <i class="fa fa-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ product.name }}</div>
+                            <small class="text-muted">{{ product.description|truncatechars:30 }}</small>
+                        </td>
+                        <td><span class="badge bg-success-subtle text-success">{{ product.category }}</span></td>
+                        <td class="fw-bold text-dark">₹{{ product.price }}</td>
+                        <td><small class="badge bg-light text-dark border">{{ product.available_weights|default:"N/A" }}</small></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary rounded-circle"
+                                onclick="openEditModal('{{ product.id }}','{{ product.name|escapejs }}','{{ product.category|escapejs }}','{{ product.price }}','{{ product.description|escapejs }}','{{ product.best_use|escapejs }}','{{ product.available_weights|escapejs }}')">
+                                <i class="fa fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger rounded-circle"
+                                onclick="confirmDelete('{{ product.id }}', '{{ product.name|escapejs }}')">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">No products found. Start by adding one!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="fw-bold text-success">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProductForm" action="{% url 'add_product' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body px-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Product Name *</label>
+                                <input type="text" name="name" class="form-control bg-light border-0" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small fw-bold">Category *</label>
+                                    <select name="category" class="form-select bg-light border-0" required>
+                                        <option value="Seeds">Seeds</option>
+                                        <option value="Fertilizer">Fertilizer</option>
+                                        <option value="Tools">Tools</option>
+                                        <option value="Organic">Organic</option>
+                                        <option value="Pesticides">Pesticides</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small fw-bold">Price (₹) *</label>
+                                    <input type="number" name="price" class="form-control bg-light border-0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Best Use Instructions</label>
+                                <textarea name="best_use" class="form-control bg-light border-0" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Available Weights *</label>
+                                <input type="text" name="available_weights" class="form-control bg-light border-0" placeholder="e.g. 1kg or 1 lr" required>
+                                <!-- <small class="text-muted">Enter weights separated by commas</small> -->
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Product Image *</label>
+                                <input type="file" name="image" class="form-control bg-light border-0" accept="image/*" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">General Description</label>
+                        <textarea name="description" class="form-control bg-light border-0" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button type="submit" class="btn btn-success px-4 rounded-pill">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="fw-bold text-primary">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProductForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body px-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Product Name *</label>
+                                <input type="text" name="name" id="edit_name" class="form-control bg-light border-0" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small fw-bold">Category *</label>
+                                    <select name="category" id="edit_category" class="form-select bg-light border-0" required>
+                                        <option value="Seeds">Seeds</option>
+                                        <option value="Fertilizer">Fertilizer</option>
+                                        <option value="Tools">Tools</option>
+                                        <option value="Organic">Organic</option>
+                                        <option value="Pesticides">Pesticides</option>
+                                    </select>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label small fw-bold">Price (₹) *</label>
+                                    <input type="number" name="price" id="edit_price" class="form-control bg-light border-0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Best Use Instructions</label>
+                                <textarea name="best_use" id="edit_best_use" class="form-control bg-light border-0" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Available Weights *</label>
+                                <input type="text" name="available_weights" id="edit_available_weights" class="form-control bg-light border-0" placeholder="e.g. 1kg, 5kg" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Product Image (Optional)</label>
+                                <input type="file" name="image" class="form-control bg-light border-0" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">General Description</label>
+                        <textarea name="description" id="edit_description" class="form-control bg-light border-0" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button type="submit" class="btn btn-primary px-4 rounded-pill">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow text-center p-4" style="border-radius: 20px;">
+            <h5 class="fw-bold mb-3">Delete Product?</h5>
+            <p class="text-muted small" id="deleteProductName"></p>
+            <form id="deleteForm" method="POST">
+                {% csrf_token %}
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm px-3">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(id, name, category, price, desc, bestUse, weights) {
+        // Fill basic fields
+        document.getElementById('edit_name').value = name;
+        document.getElementById('edit_category').value = category;
+        document.getElementById('edit_price').value = price;
+        document.getElementById('edit_description').value = desc;
+        document.getElementById('edit_best_use').value = bestUse;
+        
+        // Fill weight field
+        document.getElementById('edit_available_weights').value = weights;
+
+        // Set Form Action URL
+        document.getElementById('editProductForm').action = `/kisan-admin/product/edit/${id}/`; 
+
+        // Show Modal
+        new bootstrap.Modal(document.getElementById('editProductModal')).show();
+    }
+
+    function confirmDelete(id, name) {
+        document.getElementById('deleteProductName').textContent = name;
+        document.getElementById('deleteForm').action = `/kisan-admin/product/delete/${id}/`; 
+        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,300 @@
+<style>
+.img-hover-zoom { position: relative; height: 180px; overflow: hidden; }
+.img-hover-zoom img { transition: transform .5s ease; object-fit: cover; }
+.img-hover-zoom:hover img { transform: scale(1.1); }
+
+.watchlist-btn {
+    position: absolute; top: 10px; right: 10px; z-index: 10;
+    background: white; border-radius: 50%; width: 35px; height: 35px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; border: none;
+    transition: transform 0.2s;
+}
+.watchlist-btn:hover { transform: scale(1.15); }
+.watchlist-btn i { color: #ccc; transition: color 0.2s; }
+.watchlist-btn.active i { color: #e74c3c; }
+
+.view-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(40,167,69,0.7); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none;
+}
+.img-hover-zoom:hover .view-overlay { opacity: 1; }
+.animated-card { transition: transform 0.3s, box-shadow 0.3s; }
+.animated-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.10) !important; }
+</style>
+
+<!-- ══════════════════════════════════
+     PRODUCT CARD
+     The whole card opens modal on click.
+     The "Add to Cart" button uses
+     event.stopPropagation() so it does
+     NOT open the modal.
+══════════════════════════════════ -->
+<div class="col-lg-3 col-md-6 mb-4">
+    <div class="card p-3 shadow-sm animated-card"
+        style="cursor:pointer; border-radius:16px; border:1px solid #f0f0f0;"
+        data-id="{{ product.id }}"
+        data-name="{{ product.name }}"
+        data-price="{{ product.price }}"
+        data-image="{% if product.image %}{{ product.image.url }}{% else %}https://placehold.co/400x280{% endif %}"
+        data-description="{{ product.description }}"
+        data-category="{{ product.category }}"
+        data-weight="{{ product.available_weights }}"
+        data-bestuse="{{ product.best_use }}"
+        onclick="openProductModal(this)">
+
+        <div class="img-hover-zoom rounded mb-3">
+
+            <!-- ✅ Wishlist heart button -->
+            <button class="watchlist-btn"
+                data-product-id="{{ product.id }}"
+                data-product-name="{{ product.name }}"
+                data-product-image="{% if product.image %}{{ product.image.url }}{% else %}https://placehold.co/300x200{% endif %}"
+                data-product-price="{{ product.price }}"
+                onclick="handleWishlistClick(this, event)">
+                <i class="fas fa-heart"></i>
+            </button>
+
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="w-100 h-100" alt="{{ product.name }}">
+            {% else %}
+                <img src="https://placehold.co/300x200" class="w-100 h-100" alt="No image">
+            {% endif %}
+
+            <div class="view-overlay"><i class="fas fa-eye me-2"></i>View Details</div>
+        </div>
+
+        <div class="text-center">
+            <h5 class="text-truncate mb-1">{{ product.name }}</h5>
+            <p class="text-success fw-bold mb-2">₹{{ product.price }}</p>
+
+            <!-- ✅ FIX: stopPropagation prevents card's onclick (modal) from firing -->
+            <button class="btn btn-success w-100 rounded-pill fw-bold"
+                onclick="event.stopPropagation(); addToCart(
+                    '{{ product.id }}',
+                    '{{ product.name }}',
+                    '{{ product.price }}',
+                    '{% if product.image %}{{ product.image.url }}{% else %}https://placehold.co/300x200{% endif %}',
+                    '{{ product.available_weights }}'
+                )">
+                <i class="fas fa-cart-plus me-2"></i>Add to Cart
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════
+     PRODUCT VIEW MODAL
+     Uses vanilla JS show/hide — no
+     data-bs-toggle on any card so
+     there is zero chance of accidental
+     modal triggers from other buttons.
+══════════════════════════════════ -->
+<div class="modal fade" id="productViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow p-4" style="position:relative;">
+            <button type="button" class="btn-close position-absolute"
+                    style="top:16px;right:16px;"
+                    data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <img id="modalImage" src="https://placehold.co/400x280"
+                         class="img-fluid rounded-3 w-100"
+                         style="height:280px;object-fit:cover;" alt="Product">
+                </div>
+                <div class="col-md-7">
+                    <span id="modalCategory"
+                          class="badge bg-success bg-opacity-10 text-success mb-2 px-3 py-2 rounded-pill small fw-bold"></span>
+                    <h4 id="modalName" class="fw-bold mb-1"></h4>
+                    <h4 class="text-success fw-bold mb-3">₹<span id="modalPrice"></span></h4>
+                    <p class="text-muted small mb-1">
+                        <b class="text-dark">Weights:</b> <span id="modalWeight"></span>
+                    </p>
+                    <p class="text-muted small mb-1">
+                        <b class="text-dark">Best Use:</b> <span id="modalBestUse"></span>
+                    </p>
+                    <p class="text-muted small mb-3">
+                        <b class="text-dark">Description:</b> <span id="modalDescription"></span>
+                    </p>
+
+                    <!-- ✅ closes modal then adds to cart -->
+                    <button class="btn btn-success w-100 rounded-pill py-2 fw-bold shadow-sm mb-2"
+                            onclick="addToCartFromModal()">
+                        <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                    </button>
+                    <!-- ✅ adds to wishlist without opening anything -->
+                    <button class="btn btn-outline-danger w-100 rounded-pill py-2 fw-bold"
+                            onclick="addToWishlistFromModal()">
+                        <i class="fas fa-heart me-2"></i>Save to Wishlist
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+if (!window._kisanCardInit) {
+    window._kisanCardInit = true;
+
+    // ─────────────────────────────────
+    // MODAL — open via JS (no data-bs-toggle)
+    // ─────────────────────────────────
+
+    /** Called by the card's onclick="openProductModal(this)" */
+    window.openProductModal = function(card) {
+        // populate modal fields
+        document.getElementById('modalImage').src             = card.dataset.image || 'https://placehold.co/400x280';
+        document.getElementById('modalName').innerText        = card.dataset.name        || '';
+        document.getElementById('modalPrice').innerText       = card.dataset.price       || '';
+        document.getElementById('modalCategory').innerText    = card.dataset.category    || '';
+        document.getElementById('modalWeight').innerText      = card.dataset.weight      || '';
+        document.getElementById('modalDescription').innerText = card.dataset.description || '';
+        document.getElementById('modalBestUse').innerText     = card.dataset.bestuse     || '';
+
+        // store current product id on modal element
+        const modal = document.getElementById('productViewModal');
+        modal.dataset.currentId    = card.dataset.id    || '';
+        modal.dataset.currentName  = card.dataset.name  || '';
+        modal.dataset.currentPrice = card.dataset.price || '';
+        modal.dataset.currentImage = card.dataset.image || '';
+        modal.dataset.currentWeight = card.dataset.weight || '';
+
+        new bootstrap.Modal(modal).show();
+    };
+
+    // ─────────────────────────────────
+    // CART
+    // ─────────────────────────────────
+
+    window.addToCart = function(id, name, price, image, weight) {
+        const cleanPrice = parseFloat(String(price).replace(/[^0-9.]/g, '')) || 0;
+        let cart = JSON.parse(localStorage.getItem('myCart')) || [];
+        const idx = cart.findIndex(i => String(i.id) === String(id));
+        if (idx > -1) {
+            cart[idx].quantity = parseInt(cart[idx].quantity) + 1;
+        } else {
+            cart.push({
+                id:       String(id),
+                name:     name,
+                price:    cleanPrice,
+                image:    image || '',
+                weight:   weight || '',
+                quantity: 1
+            });
+        }
+        localStorage.setItem('myCart', JSON.stringify(cart));
+        updateCartCount();
+        showToast(`"${name}" add to cart 🛒`, 'success');
+    };
+
+    /** Add to cart from modal, then close modal */
+    window.addToCartFromModal = function() {
+        const modal = document.getElementById('productViewModal');
+        addToCart(
+            modal.dataset.currentId,
+            modal.dataset.currentName,
+            modal.dataset.currentPrice,
+            modal.dataset.currentImage,
+            modal.dataset.currentWeight
+        );
+        bootstrap.Modal.getInstance(modal)?.hide();
+    };
+
+    window.updateCartCount = function() {
+        const cart  = JSON.parse(localStorage.getItem('myCart')) || [];
+        const badge = document.getElementById('cart-count');
+        if (badge) {
+            const total = cart.reduce((s, i) => s + parseInt(i.quantity || 1), 0);
+            badge.innerText = total;
+            badge.style.display = total === 0 ? 'none' : 'inline-block';
+        }
+    };
+
+    // ─────────────────────────────────
+    // WISHLIST
+    // ─────────────────────────────────
+
+    /** Heart button on product card */
+    window.handleWishlistClick = function(btn, event) {
+        event.stopPropagation();   // ← prevent card onclick (modal)
+        event.preventDefault();
+        toggleWatchlist(
+            btn.dataset.productId,
+            btn.dataset.productName,
+            btn.dataset.productImage,
+            btn.dataset.productPrice,
+            btn,
+            event
+        );
+    };
+
+    /** "Save to Wishlist" button inside modal */
+    window.addToWishlistFromModal = function() {
+        const modal = document.getElementById('productViewModal');
+        const id    = modal.dataset.currentId;
+        const name  = modal.dataset.currentName;
+        const price = modal.dataset.currentPrice;
+        const image = modal.dataset.currentImage;
+
+        let wl = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+        if (!wl.some(i => String(i.id) === String(id))) {
+            wl.push({ id: String(id), name, image, price });
+            localStorage.setItem('myWatchlist', JSON.stringify(wl));
+            showToast(`"${name}" add to widhlist ❤️`, 'success');
+
+            // also mark the heart button on the card as active
+            const heartBtn = document.querySelector(`.watchlist-btn[data-product-id="${id}"]`);
+            if (heartBtn) heartBtn.classList.add('active');
+        } else {
+            showToast('alredy added wishlist.', 'info');
+        }
+        if (typeof updateWishlistCount === 'function') updateWishlistCount();
+    };
+
+    // ─────────────────────────────────
+    // TOAST
+    // ─────────────────────────────────
+    window.showToast = function(message, type) {
+        let wrap = document.getElementById('kisanToastWrap');
+        if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.id = 'kisanToastWrap';
+            wrap.style.cssText = 'position:fixed;top:80px;right:20px;z-index:99999;min-width:260px;';
+            document.body.appendChild(wrap);
+        }
+        const bg = type === 'success' ? 'bg-success'
+                 : type === 'danger'  ? 'bg-danger'
+                 : 'bg-secondary';
+        const div = document.createElement('div');
+        div.className = `toast align-items-center text-white border-0 show mb-2 ${bg}`;
+        div.innerHTML = `<div class="d-flex">
+            <div class="toast-body fw-semibold">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
+        </div>`;
+        wrap.appendChild(div);
+        new bootstrap.Toast(div, { delay: 3000 }).show();
+        div.addEventListener('hidden.bs.toast', () => div.remove());
+    };
+
+    // ─────────────────────────────────
+    // INIT on page load
+    // ─────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        // restore active heart states
+        const wl = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+        document.querySelectorAll('.watchlist-btn').forEach(btn => {
+            if (wl.some(i => String(i.id) === String(btn.dataset.productId)))
+                btn.classList.add('active');
+        });
+        updateCartCount();
+        if (typeof updateWishlistCount === 'function') updateWishlistCount();
+    });
+
+} // end guard
+</script>

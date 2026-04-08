@@ -1,0 +1,210 @@
+{% extends 'app/base.html' %}
+{% block content %}
+<style>
+    .wishlist-hero {
+        background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+        border-bottom: 1px solid #c8e6c9;
+    }
+    .wishlist-card {
+        border-radius: 18px;
+        transition: transform .3s, box-shadow .3s;
+        border: 1px solid #f0f0f0;
+    }
+    .wishlist-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,.10) !important;
+    }
+    .remove-heart {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: #fff3f3; border: none;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,.12);
+        transition: background .2s, transform .2s; cursor: pointer;
+    }
+    .remove-heart:hover { background: #ffe0e0; transform: scale(1.12); }
+    .empty-state { padding: 80px 20px; }
+</style>
+
+<!-- ── Header ── -->
+<section class="wishlist-hero py-4">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-danger rounded-3 p-2 text-white">
+                <i class="fas fa-heart fa-lg"></i>
+            </div>
+            <div>
+                <h2 class="fw-bold mb-0">My Wishlist</h2>
+                <!-- ✅ FIX: count shown here, updated by JS below -->
+                <small class="text-muted" id="wishlist-page-count">0 items saved</small>
+            </div>
+        </div>
+        <button class="btn btn-outline-danger btn-sm rounded-pill px-3"
+                onclick="clearWishlist()">
+            <i class="fas fa-trash-alt me-1"></i> Clear All
+        </button>
+    </div>
+</section>
+
+<!-- ── Grid ── -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4" id="wishlist-container"></div>
+    </div>
+</section>
+
+
+<script>
+// ── Run as soon as DOM is ready ─────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    displayWishlist();
+
+    // ✅ FIX: also update the navbar badge on this page load
+    if (typeof updateWishlistCount === 'function') updateWishlistCount();
+    if (typeof updateCartCount     === 'function') updateCartCount();
+});
+
+// ── Render all wishlist items ───────────────────
+function displayWishlist() {
+    const wishlist  = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+    const container = document.getElementById('wishlist-container');
+    const countEl   = document.getElementById('wishlist-page-count');
+
+    // ✅ FIX: update the on-page count text
+    countEl.innerText = wishlist.length === 0
+        ? '0 items saved'
+        : `${wishlist.length} item${wishlist.length > 1 ? 's' : ''} saved`;
+
+    // also keep navbar badge in sync
+    if (typeof updateWishlistCount === 'function') updateWishlistCount();
+
+    if (wishlist.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 empty-state text-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/4436/4436481.png"
+                     style="width:130px;opacity:.55;" class="mb-4" alt="">
+                <h4 class="fw-bold text-muted">Your wishlist is empty!</h4>
+                <p class="text-secondary mb-4">Tap ❤️ on the products you like.</p>
+                <a href="/" class="btn btn-success rounded-pill px-5 py-2 fw-bold shadow-sm">
+                    <i class="fas fa-store me-2"></i>start shopping
+                </a>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+    wishlist.forEach(item => {
+        const id    = item.id    || '';
+        const name  = item.name  || 'Product';
+        const price = item.price || '0';
+        const image = item.image || 'https://placehold.co/300x200';
+
+        container.innerHTML += `
+            <div class="col-lg-3 col-md-6" id="wishcard-${id}">
+                <div class="card wishlist-card h-100 shadow-sm border-0 overflow-hidden">
+
+                    <!-- Image + remove heart -->
+                    <div class="position-relative">
+                        <img src="${image}"
+                             class="card-img-top"
+                             style="height:190px;object-fit:cover;"
+                             onerror="this.src='https://placehold.co/300x200'"
+                             alt="${name}">
+                        <button class="remove-heart position-absolute"
+                                style="top:10px;right:10px;"
+                                onclick="removeFromWishlist('${id}')"
+                                title="Remove from wishlist">
+                            <i class="fas fa-heart text-danger"></i>
+                        </button>
+                    </div>
+
+                    <div class="card-body text-center d-flex flex-column px-3 pb-3 pt-2">
+                        <h6 class="fw-bold text-dark text-truncate mb-1">${name}</h6>
+                        <p class="text-success fw-bold fs-5 mb-3">₹${price}</p>
+
+                        <div class="mt-auto d-flex gap-2">
+                            <!--
+                                ✅ FIX: This button calls addToCart() directly.
+                                   It does NOT open any modal because there is
+                                   no data-bs-toggle here and we call
+                                   event.stopPropagation() just in case.
+                            -->
+                            <button class="btn btn-success flex-fill rounded-pill fw-bold py-2"
+                                    onclick="event.stopPropagation(); wishlistAddToCart('${id}', '${escapeSingle(name)}', '${escapeSingle(String(price))}', '${escapeSingle(image)}')">
+                                <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                            </button>
+                            <button class="btn btn-outline-danger rounded-pill px-3"
+                                    onclick="removeFromWishlist('${id}')"
+                                    title="Remove">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+    });
+}
+
+// ── Safe single-quote escaper for inline onclick strings ──
+function escapeSingle(str) {
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+// ── Add to cart from wishlist page ─────────────
+// ✅ FIX: self-contained — does NOT rely on modal being open
+function wishlistAddToCart(id, name, price, image) {
+    const cleanPrice = parseFloat(String(price).replace(/[^0-9.]/g, '')) || 0;
+    let cart = JSON.parse(localStorage.getItem('myCart')) || [];
+    const idx = cart.findIndex(i => String(i.id) === String(id));
+    if (idx > -1) {
+        cart[idx].quantity = parseInt(cart[idx].quantity) + 1;
+    } else {
+        cart.push({ id: String(id), name, price: cleanPrice, image, weight: '', quantity: 1 });
+    }
+    localStorage.setItem('myCart', JSON.stringify(cart));
+
+    // update navbar cart badge
+    if (typeof updateCartCount === 'function') updateCartCount();
+
+    // show toast if available, else alert
+    if (typeof showToast === 'function') {
+        showToast(`"${name}" कार्टमध्ये जोडले! 🛒`, 'success');
+    } else {
+        // small inline confirmation
+        const btn = event.target.closest('button');
+        if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i>Added!';
+            btn.disabled = true;
+            setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+        }
+    }
+}
+
+// ── Remove from wishlist ────────────────────────
+function removeFromWishlist(id) {
+    let wishlist = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+    wishlist = wishlist.filter(i => String(i.id) !== String(id));
+    localStorage.setItem('myWatchlist', JSON.stringify(wishlist));
+
+    // animate card out, then re-render
+    const card = document.getElementById('wishcard-' + id);
+    if (card) {
+        card.style.transition = 'opacity .3s, transform .3s';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(.9)';
+        setTimeout(displayWishlist, 300);
+    } else {
+        displayWishlist();
+    }
+    if (typeof updateWishlistCount === 'function') updateWishlistCount();
+}
+
+// ── Clear all ───────────────────────────────────
+function clearWishlist() {
+    if (!confirm('Remove all items from wishlist?')) return;
+    localStorage.removeItem('myWatchlist');
+    displayWishlist();
+    if (typeof updateWishlistCount === 'function') updateWishlistCount();
+}
+</script>
+{% endblock %}

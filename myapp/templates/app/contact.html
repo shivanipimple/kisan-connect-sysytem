@@ -1,0 +1,251 @@
+{% extends 'app/base.html' %}
+{% load static %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* Header */
+.contact-hero {
+    background: linear-gradient(135deg, rgba(27,67,50,.92), rgba(74,124,89,.88)),
+                url('https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+    padding: 90px 0 70px; color: #fff; text-align: center;
+}
+.contact-hero h1 { font-size: 46px; font-weight: 800; margin-bottom: 10px; }
+.contact-hero p  { font-size: 18px; opacity: .85; }
+
+/* Quick contact cards */
+.quick-card {
+    background: #fff; border-radius: 18px; padding: 28px 20px;
+    text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.07);
+    text-decoration: none !important; color: inherit;
+    display: block; transition: transform .25s, box-shadow .25s;
+    height: 100%;
+}
+.quick-card:hover { transform: translateY(-6px); box-shadow: 0 12px 36px rgba(0,0,0,.12); }
+.qc-icon {
+    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+}
+.qc-green  { background: #eef5f0; color: #2d5a3d; }
+.qc-wa     { background: #e8fdf0; color: #25d366; }
+.qc-mail   { background: #e8f4ff; color: #1a6bb5; }
+.qc-map    { background: #fff3e8; color: #e07b00; }
+.quick-card h6 { font-weight: 800; font-size: 15px; color: #1a2e1f; margin-bottom: 4px; }
+.quick-card p  { font-size: 12px; color: #6c757d; margin-bottom: 8px; }
+.quick-card span { font-weight: 700; font-size: 13px; }
+
+/* Form section */
+.form-wrap {
+    background: #fff; border-radius: 24px; padding: 40px 44px;
+    box-shadow: 0 4px 28px rgba(0,0,0,.08);
+}
+.form-title  { font-size: 24px; font-weight: 800; color: #1a2e1f; margin-bottom: 4px; }
+.form-sub    { font-size: 14px; color: #6c757d; margin-bottom: 28px; }
+.field-label { font-size: 12px; font-weight: 700; color: #4a7c59; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6px; display: block; }
+
+.kc-input {
+    width: 100%; border: 2px solid #e0e9e3; border-radius: 12px;
+    padding: 12px 16px; font-size: 14px; font-family: inherit;
+    transition: border-color .2s, box-shadow .2s; background: #f9fbf9;
+    box-sizing: border-box;
+}
+.kc-input:focus { border-color: #4a7c59; outline: none; box-shadow: 0 0 0 4px rgba(74,124,89,.1); background: #fff; }
+textarea.kc-input { resize: vertical; min-height: 120px; }
+
+.btn-send {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+    border: none; color: #fff; border-radius: 14px; padding: 14px 32px;
+    font-size: 15px; font-weight: 700; width: 100%; cursor: pointer;
+    transition: all .2s; letter-spacing: .3px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-send:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(45,90,61,.3); }
+
+/* Alert */
+.kc-alert {
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600;
+}
+.kc-alert.success { background: #edfdf4; color: #1a5c36; border-left: 4px solid #2d9d5e; }
+.kc-alert.error   { background: #fde8e8; color: #721c24; border-left: 4px solid #c0392b; }
+
+/* Map + hours */
+.map-wrap { border-radius: 18px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+.hours-card {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+    border-radius: 18px; padding: 24px 28px; color: #fff; margin-top: 20px;
+}
+.hours-card h6 { font-weight: 800; font-size: 16px; margin-bottom: 12px; }
+.hours-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.15); }
+.hours-row:last-child { border-bottom: none; }
+
+/* WA float button */
+.wa-float {
+    position: fixed; bottom: 28px; right: 28px; z-index: 9999;
+    background: #25d366; color: #fff; border-radius: 50%;
+    width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
+    font-size: 28px; box-shadow: 0 6px 20px rgba(37,211,102,.4);
+    text-decoration: none; transition: transform .2s;
+}
+.wa-float:hover { transform: scale(1.12); color: #fff; }
+</style>
+
+
+<!-- HERO -->
+<section class="contact-hero">
+    <div class="container">
+        <h1>Get In Touch 🌿</h1>
+        <p>Have questions about KisanConnect? We're here to help you grow.</p>
+    </div>
+</section>
+
+
+<!-- QUICK CONTACT CARDS -->
+<section style="background:#f4f6f0; padding:50px 0 40px;">
+<div class="container">
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="kc-alert {% if 'successfully' in msg.message or '✅' in msg.message %}success{% else %}error{% endif %}">
+        {% if '✅' in msg.message %}✅{% else %}⚠️{% endif %} {{ msg }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <div class="row g-4 mb-5">
+        <div class="col-6 col-md-3">
+            <a href="tel:+918552853610" class="quick-card">
+                <div class="qc-icon qc-green"><i class="fas fa-phone-alt"></i></div>
+                <h6>Call Us</h6>
+                <p>Tap to call directly</p>
+                <span style="color:#2d5a3d;">+91 85528 53610</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="https://wa.me/918552853610?text=Hello%20KisanConnect,%20I%20have%20a%20query." target="_blank" class="quick-card">
+                <div class="qc-icon qc-wa"><i class="fab fa-whatsapp"></i></div>
+                <h6>WhatsApp</h6>
+                <p>Chat with us instantly</p>
+                <span style="color:#25d366;">Message Now</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="mailto:vedu8@gmail.com" class="quick-card">
+                <div class="qc-icon qc-mail"><i class="fas fa-envelope"></i></div>
+                <h6>Email Us</h6>
+                <p>Tap to open mail app</p>
+                <span style="color:#1a6bb5;">vedu8@gmail.com</span>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="https://www.google.com/maps/search/?api=1&query=Rajur+Ganpati+Temple+Jalna" target="_blank" class="quick-card">
+                <div class="qc-icon qc-map"><i class="fas fa-map-marker-alt"></i></div>
+                <h6>Visit Us</h6>
+                <p>Rajur Ganpati, Jalna</p>
+                <span style="color:#e07b00;">Open Navigation</span>
+            </a>
+        </div>
+    </div>
+
+
+    <!-- FORM + MAP -->
+    <div class="row g-5">
+
+        <!-- FORM -->
+        <div class="col-lg-6">
+            <div class="form-wrap">
+                <div class="form-title">Send us a Message 💬</div>
+                <div class="form-sub">Fill the form below — we'll reply on WhatsApp within minutes.</div>
+
+                <form method="POST" action="{% url 'contact' %}" id="contactForm" novalidate>
+                    {% csrf_token %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="field-label">Your Name *</label>
+                            <input type="text" name="name" id="nameInput" class="kc-input"
+                                   placeholder="Full Name" required minlength="3">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="field-label">Mobile Number *</label>
+                            <input type="tel" name="phone" id="phoneInput" class="kc-input"
+                                   placeholder="10-digit number" pattern="[0-9]{10}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="field-label">Email <span style="font-weight:400;color:#aaa;">(Optional)</span></label>
+                            <input type="email" name="email" class="kc-input" placeholder="email@example.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="field-label">Your Message *</label>
+                            <textarea name="message" id="msgInput" class="kc-input"
+                                      placeholder="How can we help you today?" required></textarea>
+                        </div>
+                        <div class="col-12" style="margin-top:6px;">
+                            <button type="submit" class="btn-send" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i> Send Message
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MAP + HOURS -->
+        <div class="col-lg-6">
+            <div class="map-wrap" style="height:340px;">
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15004.475459392263!2d75.9288075!3d19.920434!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bd96016e7924d5b%3A0xe5433d76e730872c!2sRajur%20Ganpati%20Temple!5e0!3m2!1sen!2sin!4v1713000000000!5m2!1sen!2sin"
+                    width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
+                </iframe>
+            </div>
+            <div class="hours-card">
+                <h6><i class="fas fa-clock me-2"></i>Business Hours</h6>
+                <div class="hours-row"><span>Monday – Saturday</span><span>09:00 AM – 07:00 PM</span></div>
+                <div class="hours-row"><span>Sunday</span><span style="color:#ffcf77;">Closed</span></div>
+                <div class="hours-row" style="margin-top:6px;border-bottom:none;">
+                    <span>📞 WhatsApp Response</span><span>Within 30 mins</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</section>
+
+<!-- WhatsApp Float Button -->
+<a href="https://wa.me/918552853610" target="_blank" class="wa-float" title="Chat on WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+</a>
+
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    const name  = document.getElementById('nameInput').value.trim();
+    const phone = document.getElementById('phoneInput').value.trim();
+    const msg   = document.getElementById('msgInput').value.trim();
+
+    if (name.length < 3) {
+        e.preventDefault();
+        alert("Please enter your full name (at least 3 characters).");
+        return;
+    }
+    if (!/^\d{10}$/.test(phone)) {
+        e.preventDefault();
+        alert("Mobile number must be exactly 10 digits.");
+        return;
+    }
+    if (msg.length < 5) {
+        e.preventDefault();
+        alert("Please enter a message.");
+        return;
+    }
+
+    // Button loading state
+    const btn = document.getElementById('sendBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+    btn.disabled = true;
+});
+</script>
+
+{% endblock %}

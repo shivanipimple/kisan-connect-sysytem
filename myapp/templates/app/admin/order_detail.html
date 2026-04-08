@@ -1,0 +1,103 @@
+{% extends 'app/admin/base.html' %}
+{% block content %}
+<div class="content-body">
+    <div class="mb-3 d-print-none"> 
+        <a href="{% url 'admin_orders' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i> Back to Orders
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 p-4">
+        <div class="d-flex justify-content-between border-bottom pb-3 mb-4">
+            <div>
+                <h3 class="fw-bold mb-0">Order #{{ order.id }}</h3>
+                <small class="text-muted">Placed on: {{ order.order_date|date:"d M Y, h:i A" }}</small>
+            </div>
+            <button class="btn btn-primary d-print-none" onclick="window.print()">
+                <i class="fa fa-print"></i> Print Invoice
+            </button>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <h6 class="text-muted text-uppercase small fw-bold">Customer Contact</h6>
+                <p class="mb-1"><strong>{{ order.full_name }}</strong></p>
+                <p class="mb-1">{{ order.mobile }}</p>
+                <p class="mb-1">{{ order.email }}</p>
+            </div>
+
+            <div class="col-md-4">
+                <h6 class="text-muted text-uppercase small fw-bold">Farmer Profile Details</h6>
+                {# Check both possible related names: farmerprofile and profile #}
+                {% with profile=order.user.farmerprofile|default:order.user.profile %}
+                    {% if profile %}
+                        <p class="mb-1"><strong>Age:</strong> {{ profile.age }}</p>
+                        <p class="mb-1"><strong>Gender:</strong> {{ profile.gender }}</p>
+                        <p class="mb-1 text-wrap"><strong>Reg. Address:</strong> {{ profile.address }}</p>
+                    {% elif order.user %}
+                        <p class="text-muted small italic">Logged in as <strong>{{ order.user.username }}</strong>, but profile is incomplete.</p>
+                    {% else %}
+                        <p class="text-warning small fw-bold">Guest Checkout (No Profile)</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <div class="col-md-4 text-md-end">
+                <h6 class="text-muted text-uppercase small fw-bold">Delivery Address</h6>
+                <p class="mb-0">{{ order.address }}</p>
+                <p class="mb-0">{{ order.city }} - {{ order.pincode }}</p>
+                <p class="mt-2"><span class="badge bg-light text-dark border">Method: {{ order.payment_method }}</span></p>
+            </div>
+        </div>
+
+        <h6 class="text-muted text-uppercase small fw-bold mb-3">Items Ordered</h6>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">Image</th>
+                        <th>Product Name</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                    <tr>
+                        <td>
+                            {% if item.image %}
+                                <img src="{{ item.image }}" alt="" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">
+                            {% else %}
+                                <div class="bg-light text-center small text-muted pt-3" style="width: 60px; height: 60px; border-radius: 5px;">No Image</div>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ item.name }}</td>
+                        <td>₹{{ item.price }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td class="fw-bold">₹{{ item.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No items found in this order.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end text-uppercase small py-3">Grand Total (Incl. GST & Fees):</th>
+                        <th class="text-success fs-4 py-3">₹{{ order.total_amount }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="mt-4 p-3 bg-light rounded d-print-none">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Payment Status: <strong>{{ order.payment_status }}</strong></span>
+                <span>Current Status: <span class="badge bg-success">{{ order.status }}</span></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,369 @@
+{% extends 'app/base.html' %}
+{% block content %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+.mo-wrap { background: #f4f6f0; min-height: 100vh; padding: 36px 0 60px; }
+
+/* Page header */
+.mo-page-header { margin-bottom: 32px; }
+.mo-page-header h2 { font-size: 28px; font-weight: 800; color: #1a2e1f; margin: 0 0 4px; }
+.mo-page-header p  { color: #6c757d; font-size: 14px; margin: 0; }
+
+/* Order card */
+.order-card {
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06);
+    margin-bottom: 24px; overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+}
+.order-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 32px rgba(0,0,0,.11);
+}
+
+/* Card top strip */
+.card-strip {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+    padding: 18px 26px; display: flex;
+    align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+}
+.card-strip h5  { color: #fff; font-weight: 800; font-size: 17px; margin: 0; }
+.card-strip p   { color: rgba(255,255,255,.75); font-size: 12px; margin: 2px 0 0; }
+.strip-right    { text-align: right; }
+.strip-amount   { color: #fff; font-size: 20px; font-weight: 800; }
+.strip-payment  { color: rgba(255,255,255,.7); font-size: 12px; }
+
+/* Status pill */
+.s-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 999px; padding: 4px 14px;
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.s-pending   { background:#fff3cd; color:#856404; }
+.s-packed    { background:#fff3cd; color:#6d4c00; }
+.s-shipped   { background:#cce5ff; color:#004085; }
+.s-delivered { background:#d4edda; color:#155724; }
+.s-pickedup  { background:#d4edda; color:#155724; }
+.s-ready     { background:#e8d5ff; color:#5a1fa1; }
+.s-cancelled { background:#f8d7da; color:#721c24; }
+
+/* Card body */
+.card-body-inner { padding: 24px 26px; }
+
+/* Mini tracker */
+.mini-tracker { position: relative; display: flex; justify-content: space-between; margin-bottom: 4px; }
+.mini-tracker::before {
+    content: ''; position: absolute; top: 17px; left: 18px; right: 18px;
+    height: 2px; background: #e0e9e3; z-index: 0; border-radius: 2px;
+}
+.mini-fill {
+    position: absolute; top: 17px; left: 18px; height: 2px;
+    background: linear-gradient(90deg, #2d5a3d, #6aab7a);
+    z-index: 1; border-radius: 2px; transition: width .8s ease;
+    width: 0%;
+}
+.m-step { display: flex; flex-direction: column; align-items: center; z-index: 2; flex: 1; }
+.m-dot  {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; border: 2px solid #e0e9e3;
+    background: #fff; transition: all .3s;
+}
+.m-dot.done {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+    border-color: #4a7c59; color: #fff;
+    box-shadow: 0 0 0 3px rgba(74,124,89,.15);
+}
+.m-dot.future { background: #f4f6f0; border-color: #d5ddd8; color: #c0c8c2; }
+.m-lbl { font-size: 10px; font-weight: 600; margin-top: 6px; color: #4a7c59; text-align: center; }
+.m-lbl.grey { color: #b0bdb5; }
+
+/* Cancelled banner */
+.cancelled-bar {
+    background: #fde8e8; border-radius: 10px; padding: 12px 16px;
+    color: #721c24; font-weight: 600; font-size: 13px;
+    display: flex; align-items: center; gap: 8px; margin-bottom: 18px;
+}
+
+/* Pickup alerts */
+.pickup-alert {
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 14px;
+}
+.pickup-ready   { background: #edfdf4; border-left: 4px solid #198754; }
+.pickup-packing { background: #fffbeb; border-left: 4px solid #f59e0b; }
+.pickup-alert .alert-title { font-weight: 700; font-size: 14px; }
+.pickup-alert .alert-sub   { font-size: 12px; color: #6c757d; margin: 0; }
+
+/* Items mini list */
+.items-mini { width: 100%; border-collapse: collapse; }
+.items-mini td {
+    padding: 7px 4px; font-size: 13px;
+    border-bottom: 1px solid #f4f6f0; vertical-align: middle;
+}
+.items-mini tr:last-child td { border-bottom: none; }
+.item-n  { font-weight: 600; color: #1a2e1f; }
+.item-q  { color: #6c757d; white-space: nowrap; }
+.item-p  { font-weight: 700; color: #2d5a3d; text-align: right; white-space: nowrap; }
+
+/* Address box */
+.addr-box { background: #f9fbf9; border-radius: 10px; padding: 14px 16px; font-size: 13px; }
+.addr-box strong { color: #1a2e1f; display: block; margin-bottom: 4px; }
+.addr-box span   { color: #6c757d; display: block; line-height: 1.6; }
+
+/* CTA button */
+.btn-detail {
+    background: linear-gradient(135deg, #2d5a3d, #4a7c59);
+    color: #fff; border: none; border-radius: 999px; padding: 9px 24px;
+    font-size: 13px; font-weight: 700; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px; transition: all .2s;
+}
+.btn-detail:hover { color:#fff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(45,90,61,.3); }
+
+/* Empty state */
+.empty-wrap { text-align: center; padding: 70px 20px; }
+.empty-wrap img { width: 110px; margin-bottom: 20px; opacity: .5; }
+.empty-wrap h4  { font-weight: 800; color: #6c757d; margin-bottom: 8px; }
+.empty-wrap p   { color: #adb5bd; margin-bottom: 24px; }
+.btn-shop {
+    background: linear-gradient(135deg, #2d5a3d, #6aab7a);
+    color: #fff; border: none; border-radius: 999px; padding: 12px 36px;
+    font-weight: 700; font-size: 15px; text-decoration: none; display: inline-block;
+}
+</style>
+
+
+<div class="mo-wrap">
+<div class="container">
+
+    <!-- Page header -->
+    <div class="mo-page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2>My Orders 🌿</h2>
+            <p>Track and manage your KisanConnect farm-fresh orders</p>
+        </div>
+        <a href="/" class="btn-detail">🛒 Continue Shopping</a>
+    </div>
+
+    {% if user.is_superuser %}
+    <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-4 py-2">
+        <small><strong>Admin View:</strong> Showing orders linked to your account.</small>
+    </div>
+    {% endif %}
+
+
+    {% if orders %}
+    {% for order in orders %}
+
+    <div class="order-card" data-status="{{ order.status }}" data-pickup="{{ order.is_pickup|yesno:'true,false' }}">
+
+        <!-- ── TOP STRIP ── -->
+        <div class="card-strip">
+            <div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <h5>Order #{{ order.id }}</h5>
+                    <span class="s-pill
+                        {% if order.status == 'Delivered' %}s-delivered
+                        {% elif order.status == 'PickedUp' %}s-pickedup
+                        {% elif order.status == 'Cancelled' %}s-cancelled
+                        {% elif order.status == 'Shipped' %}s-shipped
+                        {% elif order.status == 'ReadyForPickup' %}s-ready
+                        {% elif order.status == 'Packed' %}s-packed
+                        {% else %}s-pending{% endif %}">
+                        {% if order.status == 'Delivered' or order.status == 'PickedUp' %}✅
+                        {% elif order.status == 'Cancelled' %}❌
+                        {% elif order.status == 'Shipped' %}🚚
+                        {% elif order.status == 'Packed' %}📦
+                        {% elif order.status == 'ReadyForPickup' %}🏪
+                        {% else %}🕐{% endif %}
+                        {{ order.get_status_display|default:order.status }}
+                    </span>
+                </div>
+                <p>Placed {{ order.order_date|date:"d M Y, g:i A" }}</p>
+            </div>
+            <div class="strip-right">
+                <div class="strip-amount">₹{{ order.total_amount }}</div>
+                <div class="strip-payment">{{ order.payment_method }} · {{ order.payment_status }}</div>
+            </div>
+        </div>
+
+        <!-- ── CARD BODY ── -->
+        <div class="card-body-inner">
+
+            <!-- Pickup alerts -->
+            {% if order.is_pickup %}
+                {% if order.status == 'ReadyForPickup' %}
+                <div class="pickup-alert pickup-ready">
+                    <span style="font-size:26px;">🏪</span>
+                    <div>
+                        <div class="alert-title text-success">Ready for Pickup!</div>
+                        <p class="alert-sub">Visit our store with Order ID <strong>#{{ order.id }}</strong></p>
+                    </div>
+                </div>
+                {% elif order.status == 'Packed' %}
+                <div class="pickup-alert pickup-packing">
+                    <span style="font-size:26px;">📦</span>
+                    <div>
+                        <div class="alert-title" style="color:#92400e;">Packing Your Items…</div>
+                        <p class="alert-sub">We'll notify you when ready at the collection point.</p>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Cancelled banner -->
+            {% if order.status == 'Cancelled' %}
+            <div class="cancelled-bar">❌ This order was cancelled.</div>
+            {% endif %}
+
+            <!-- ── MINI TRACKER ── -->
+            {% if order.status != 'Cancelled' %}
+            <div class="mini-tracker mb-1" id="tracker-{{ order.id }}">
+
+                <!-- Step 1: Ordered — always done -->
+                <div class="m-step">
+                    <div class="m-dot done">🛒</div>
+                    <div class="m-lbl">Ordered</div>
+                </div>
+
+                <!-- Step 2: Packed -->
+                <div class="m-step">
+                    {% if order.status == 'Packed' or order.status == 'Shipped' or order.status == 'Delivered' or order.status == 'ReadyForPickup' or order.status == 'PickedUp' %}
+                        <div class="m-dot done">📦</div>
+                        <div class="m-lbl">Packed</div>
+                    {% else %}
+                        <div class="m-dot future">📦</div>
+                        <div class="m-lbl grey">Packed</div>
+                    {% endif %}
+                </div>
+
+                <!-- Step 3: Shipped / Ready -->
+                <div class="m-step">
+                    {% if order.is_pickup %}
+                        {% if order.status == 'ReadyForPickup' or order.status == 'PickedUp' %}
+                            <div class="m-dot done">🏪</div>
+                            <div class="m-lbl">Ready</div>
+                        {% else %}
+                            <div class="m-dot future">🏪</div>
+                            <div class="m-lbl grey">Ready</div>
+                        {% endif %}
+                    {% else %}
+                        {% if order.status == 'Shipped' or order.status == 'Delivered' %}
+                            <div class="m-dot done">🚚</div>
+                            <div class="m-lbl">Shipped</div>
+                        {% else %}
+                            <div class="m-dot future">🚚</div>
+                            <div class="m-lbl grey">Shipped</div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Step 4: Delivered / Picked Up -->
+                <div class="m-step">
+                    {% if order.status == 'Delivered' or order.status == 'PickedUp' %}
+                        <div class="m-dot done">✅</div>
+                        <div class="m-lbl">{% if order.is_pickup %}Picked Up{% else %}Delivered{% endif %}</div>
+                    {% else %}
+                        <div class="m-dot future">✅</div>
+                        <div class="m-lbl grey">{% if order.is_pickup %}Picked Up{% else %}Delivered{% endif %}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Green fill bar (width set by JS) -->
+                <div class="mini-fill" id="fill-{{ order.id }}"></div>
+            </div>
+            {% endif %}
+
+            <hr style="border-color:#f0f3f1;margin:20px 0;">
+
+            <!-- Items + Address -->
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <div style="font-size:12px;font-weight:700;color:#4a7c59;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">
+                        Items Ordered
+                    </div>
+                    <table class="items-mini">
+                        <tbody>
+                            {% for item in order.items_list %}
+                            <tr>
+                                <td class="item-n">{{ item.name }}</td>
+                                <td class="item-q">&nbsp;× {{ item.quantity }}</td>
+                                <td class="item-p">₹{{ item.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-5">
+                    <div style="font-size:12px;font-weight:700;color:#4a7c59;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">
+                        {% if order.is_pickup %}Pickup At{% else %}Deliver To{% endif %}
+                    </div>
+                    <div class="addr-box">
+                        {% if order.is_pickup %}
+                            <strong>KisanConnect Main Hub</strong>
+                            <span>Store ID: #KC-{{ order.id|add:"100" }}</span>
+                        {% else %}
+                            <strong>{{ order.full_name }}</strong>
+                            <span>{{ order.address }}, {{ order.city }} – {{ order.pincode }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="text-end mt-4">
+                <a href="{% url 'order_detail' order.id %}" class="btn-detail">
+                    View Full Details →
+                </a>
+            </div>
+
+        </div><!-- /card-body-inner -->
+    </div><!-- /order-card -->
+
+    {% endfor %}
+
+    {% else %}
+    <div class="empty-wrap">
+        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" alt="No orders">
+        <h4>No Orders Yet</h4>
+        <p>You haven't placed any orders with KisanConnect yet.</p>
+        <a href="/" class="btn-shop">Start Shopping 🌿</a>
+    </div>
+    {% endif %}
+
+</div><!-- /container -->
+</div><!-- /mo-wrap -->
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Animate every mini tracker progress bar
+    document.querySelectorAll('.order-card').forEach(card => {
+        const status   = card.dataset.status;
+        const isPickup = card.dataset.pickup === 'true';
+        const orderId  = card.querySelector('[id^="fill-"]');
+        if (!orderId) return;
+
+        const fillId = orderId.id.replace('fill-', '');
+        const fill   = document.getElementById('fill-' + fillId);
+        if (!fill) return;
+
+        let pct = 5;
+        if (isPickup) {
+            if (status === 'Packed' || status === 'ReadyForPickup') pct = 50;
+            if (status === 'PickedUp') pct = 100;
+        } else {
+            if (status === 'Packed')    pct = 33;
+            if (status === 'Shipped')   pct = 66;
+            if (status === 'Delivered') pct = 100;
+        }
+
+        setTimeout(() => { fill.style.width = pct + '%'; }, 400);
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,329 @@
+<style>
+    .img-hover-zoom { position: relative; height: 180px; overflow: hidden; }
+    .img-hover-zoom img { transition: transform .5s ease; object-fit: cover; }
+    .img-hover-zoom:hover img { transform: scale(1.1); }
+
+    /* Watchlist Heart Icon Styling */
+    .watchlist-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background: white;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .watchlist-btn i { color: #ccc; transition: color 0.3s ease; pointer-events: none; }
+    .watchlist-btn.active i { color: #e74c3c; }
+    .watchlist-btn:hover { transform: scale(1.1); }
+
+    /* Fix: pointer-events: none allows the click to reach the modal trigger */
+    .view-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(40, 167, 69, 0.7); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; opacity: 0; transition: opacity 0.3s ease;
+        z-index: 2;
+        pointer-events: none; 
+    }
+    .img-hover-zoom:hover .view-overlay { opacity: 1; }
+    
+    .animated-card { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
+    .animated-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+</style>
+
+<div class="col-lg-3 col-md-6 mb-4">
+    <div class="card product-card animated-card h-100 p-3 border-0 shadow-sm" 
+         data-bs-toggle="modal" 
+         data-bs-target="#productModal{{ tab_id }}{{ product.id }}">
+        
+        <div class="img-hover-zoom rounded mb-3">
+            <button class="watchlist-btn" 
+                    type="button"
+                    onclick="event.stopPropagation(); toggleWatchlist('{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.image.url }}', '{{ product.price }}', this);">
+                <i class="fas fa-heart"></i>
+            </button>
+
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top w-100 h-100" alt="{{ product.name }}">
+            {% else %}
+                <img src="https://placehold.co/300x200?text=No+Image" class="card-img-top w-100 h-100" alt="No Image">
+            {% endif %}
+            
+            <div class="view-overlay text-center p-2" style="font-size: 0.8rem;">Click to View Details</div>
+        </div>
+
+        <div class="card-body text-center d-flex flex-column p-0">
+            <h5 class="card-title fw-bold text-truncate mb-2">{{ product.name }}</h5>
+            <p class="text-success fw-bold fs-5 mb-3">₹{{ product.price }}</p>
+            
+            <button class="btn btn-success w-100 rounded-pill shadow-sm"
+                    type="button"
+                    onclick="event.stopPropagation(); addToCart('{{ tab_id }}{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}', '{{ product.image.url }}');">
+                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+    /* Existing Styles */
+    .img-hover-zoom { position: relative; height: 180px; overflow: hidden; }
+    .img-hover-zoom img { transition: transform .5s ease; object-fit: cover; }
+    .img-hover-zoom:hover img { transform: scale(1.1); }
+
+    .view-overlay {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(40, 167, 69, 0.7); color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: bold; opacity: 0; transition: opacity 0.3s ease;
+        z-index: 2;
+    }
+    .img-hover-zoom:hover .view-overlay { opacity: 1; }
+    
+    .animated-card { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
+    .animated-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+
+    .weight-pill {
+        cursor: pointer; transition: all 0.2s ease; border: 1px solid #28a745;
+        background: transparent; color: #28a745; font-size: 0.85rem;
+    }
+    .weight-pill:hover { background: #f0fff4; }
+    .weight-pill.active {
+        background: #28a745 !important; color: white !important;
+        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+    }
+
+    /* Heart Button Styles */
+    .heart-icon-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 3;
+        background: white;
+        border: none;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        transition: transform 0.2s ease;
+    }
+    .heart-icon-btn:hover { transform: scale(1.1); }
+    
+    /* Default empty heart color */
+    .heart-icon-btn i { color: #ccc; font-size: 1.1rem; transition: all 0.3s ease; }
+    
+    /* Liked state: Red color for the icon */
+    .heart-icon-btn.liked i { 
+        color: #dc3545 !important; 
+    }
+</style>
+
+<div class="col-lg-3 col-md-6 mb-4">
+    <div class="card product-card animated-card h-100 p-3 border-0 shadow-sm" 
+         data-bs-toggle="modal" 
+         data-bs-target="#productModal{{ tab_id }}{{ product.id }}">
+        
+        <div class="img-hover-zoom rounded mb-3">
+            <button class="heart-icon-btn stop-prop" 
+                    id="heart{{ tab_id }}{{ product.id }}"
+                    onclick="event.stopPropagation(); toggleWatchlist('{{ tab_id }}{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}', '{{ product.image.url }}')">
+                <i class="far fa-heart"></i>
+            </button>
+
+            {% if product.image %}
+                <img src="{{ product.image.url }}" class="card-img-top w-100 h-100" alt="{{ product.name }}">
+            {% else %}
+                <img src="https://placehold.co/300x200?text=No+Image" class="card-img-top w-100 h-100" alt="No Image">
+            {% endif %}
+            <div class="view-overlay text-center p-2" style="font-size: 0.8rem;">Click to View Details</div>
+        </div>
+
+        <div class="card-body text-center d-flex flex-column p-0">
+            <h5 class="card-title fw-bold text-truncate mb-2">{{ product.name }}</h5>
+            <p class="text-success fw-bold fs-5 mb-3">₹{{ product.price }}</p>
+            <button class="btn btn-success w-100 rounded-pill shadow-sm stop-prop"
+                    onclick="event.stopPropagation(); addToCart('{{ tab_id }}{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}', '{{ product.image.url }}');">
+                <i class="fas fa-shopping-cart me-2"></i>Add to Cart
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade product-modal" id="productModal{{ tab_id }}{{ product.id }}" tabindex="-1" aria-hidden="true" data-base-price="{{ product.price }}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-success">{{ product.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <img src="{{ product.image.url }}" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: contain;">
+                </div>
+                
+                <div class="mb-3 text-start">
+                    <h6 class="fw-bold"><i class="fas fa-align-left me-2 text-success"></i>Description</h6>
+                    <p class="text-muted small mb-0">{{ product.description }}</p>
+                </div>
+
+                <div class="mb-3 text-start">
+                    <h6 class="fw-bold"><i class="fas fa-seedling me-2 text-success"></i>Best Use</h6>
+                    <p class="text-muted small mb-0">{{ product.best_use|default:"Highly recommended for agricultural efficiency." }}</p>
+                </div>
+
+                {% if product.available_weights %}
+                <div class="mb-2 text-start">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-weight-hanging me-2 text-success"></i>Select Weight</h6>
+                    <div class="d-flex flex-wrap gap-2 weight-container" id="weightContainer{{ tab_id }}{{ product.id }}">
+                        {% with weight_list=product.available_weights.split %}
+                            {% for w in weight_list %}
+                                {% with cleaned_w=w|cut:',' %}
+                                <div class="badge weight-pill rounded-pill px-3 py-2 {% if forloop.first %}active{% endif %}" 
+                                     onclick="selectWeightPill('{{ tab_id }}{{ product.id }}', '{{ cleaned_w|escapejs }}', this)">
+                                    {{ cleaned_w }}
+                                </div>
+                                {% endwith %}
+                            {% endfor %}
+                        {% endwith %}
+                    </div>
+                    <input type="hidden" id="selectedWeight{{ tab_id }}{{ product.id }}" value="{{ product.available_weights.split.0|cut:',' }}">
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="modal-footer border-0">
+                <button class="btn btn-success w-100 rounded-pill py-3 fw-bold" 
+                        onclick="addToCart('{{ tab_id }}{{ product.id }}', '{{ product.name|escapejs }}', '{{ product.price }}', '{{ product.image.url }}');" 
+                        data-bs-dismiss="modal">
+                    Add to Cart — <span id="modalPrice{{ tab_id }}{{ product.id }}">₹{{ product.price }}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- WATCHLIST LOGIC ---
+    function toggleWatchlist(uniqueId, name, price, imageUrl) {
+        let watchlist = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+        const btn = document.getElementById('heart' + uniqueId);
+        const icon = btn.querySelector('i');
+        
+        const existingIndex = watchlist.findIndex(item => item.uniqueId === uniqueId);
+        
+        if (existingIndex > -1) {
+            // Remove: Unfill heart
+            watchlist.splice(existingIndex, 1);
+            btn.classList.remove('liked');
+            icon.classList.remove('fas');
+            icon.classList.add('far'); 
+        } else {
+            // Add: Fill heart red
+            watchlist.push({
+                uniqueId: uniqueId,
+                name: name,
+                price: price,
+                image: imageUrl
+            });
+            btn.classList.add('liked');
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+        }
+        
+        localStorage.setItem('myWatchlist', JSON.stringify(watchlist));
+        if (typeof updateWatchlistCount === 'function') updateWatchlistCount();
+    }
+
+    function loadWatchlistUI() {
+        let watchlist = JSON.parse(localStorage.getItem('myWatchlist')) || [];
+        watchlist.forEach(item => {
+            const btn = document.getElementById('heart' + item.uniqueId);
+            if (btn) {
+                btn.classList.add('liked');
+                const icon = btn.querySelector('i');
+                // Ensure heart is filled for liked items
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            }
+        });
+    }
+
+    // --- CART & UI LOGIC ---
+    if (typeof selectWeightPill !== 'function') {
+        window.selectWeightPill = function(uniqueId, weightValue, element) {
+            const container = document.getElementById('weightContainer' + uniqueId);
+            container.querySelectorAll('.weight-pill').forEach(pill => pill.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('selectedWeight' + uniqueId).value = weightValue;
+            
+            const modal = document.getElementById('productModal' + uniqueId);
+            const basePrice = modal.getAttribute('data-base-price');
+            const priceSpan = document.getElementById('modalPrice' + uniqueId);
+            
+            const weightNum = parseFloat(weightValue.replace(/[^0-9.]/g, '')) || 1;
+            const finalPrice = (parseFloat(basePrice) * weightNum).toFixed(2);
+            priceSpan.innerText = '₹' + finalPrice;
+        };
+    }
+
+    if (typeof addToCart !== 'function') {
+        window.addToCart = function(uniqueId, name, basePrice, imageUrl) {
+            const weight = document.getElementById('selectedWeight' + uniqueId)?.value || '1 unit';
+            const weightNum = parseFloat(weight.replace(/[^0-9.]/g, '')) || 1;
+            const finalPrice = (parseFloat(basePrice) * weightNum).toFixed(2);
+            
+            let cart = JSON.parse(localStorage.getItem('myCart')) || [];
+            const existingItemIndex = cart.findIndex(item => item.uniqueId === uniqueId && item.weight === weight);
+            
+            if (existingItemIndex > -1) {
+                cart[existingItemIndex].quantity += 1;
+            } else {
+                cart.push({
+                    uniqueId: uniqueId,
+                    name: name,
+                    price: finalPrice,
+                    weight: weight,
+                    image: imageUrl,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('myCart', JSON.stringify(cart));
+            if (typeof updateCartCount === 'function') updateCartCount();
+            alert(`Added ${name} (${weight}) to cart!`);
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', loadWatchlistUI);
+
+    document.querySelectorAll('.stop-prop').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+</script>

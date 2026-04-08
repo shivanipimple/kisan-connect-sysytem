@@ -1,0 +1,348 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+<style>
+    .checkout-container { background: #f8fafc; min-height: 100vh; }
+    .card-custom { border-radius: 16px; border: none; box-shadow: 0 10px 25px rgba(0,0,0,0.03); background: #fff; }
+    .form-label { font-weight: 600; color: #334155; font-size: 0.85rem; margin-bottom: 6px; }
+    .form-control { border-radius: 10px; padding: 12px; border: 1px solid #e2e8f0; transition: 0.3s; }
+    .form-control:focus { border-color: #28a745; box-shadow: 0 0 0 0.2rem rgba(40,167,69,0.08); }
+
+    .payment-option-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 12px; }
+    .payment-option-card.active { border: 2px solid #28a745; background: #f0fdf4; }
+    .payment-details-box { display: none; margin-top: 15px; padding: 20px; background: #fff; border-radius: 12px; border: 1px dashed #28a745; animation: fadeIn 0.4s; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+    .product-list-container { max-height: 350px; overflow-y: auto; padding-right: 5px; }
+    .product-card { background: #f1f5f9; border-radius: 12px; padding: 12px; margin-bottom: 12px; border: 1px solid transparent; transition: 0.2s; }
+    .product-card:hover { border-color: #28a745; background: #fff; }
+    .product-name-header { font-size: 0.95rem; color: #1e293b; display: block; margin-bottom: 4px; }
+    .product-meta { font-size: 0.85rem; color: #64748b; display: flex; justify-content: space-between; align-items: center; }
+
+    .summary-item { display: flex; justify-content: space-between; margin-bottom: 10px; color: #475569; }
+    .btn-pay { background: #1e293b; color: white; border: none; font-weight: bold; border-radius: 12px; padding: 16px; transition: 0.3s; letter-spacing: 0.5px; }
+    .btn-pay:hover { background: #0f172a; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+
+    .modal-confirm .modal-content { border-radius: 24px; padding: 30px; border: none; }
+    .icon-box { width:70px; height:70px; margin: 0 auto 20px; border-radius:50%; border:3px solid #28a745; display:flex; align-items:center; justify-content:center; color:#28a745; font-size:32px; }
+</style>
+
+<section class="py-5 checkout-container">
+    <div class="container">
+        <h2 class="fw-bold mb-4 d-flex align-items-center">
+            <span class="bg-success text-white rounded-3 p-2 me-3 d-flex align-items-center justify-content-center" style="width:45px;height:45px;">
+                <i class="fas fa-shield-alt fs-5"></i>
+            </span>
+            Secure Checkout
+        </h2>
+
+        <!-- ✅ FIX: show alert if cart is empty -->
+        <div id="emptyCartAlert" class="alert alert-warning d-none text-center py-4">
+            <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+            <h5 class="fw-bold">Your cart is empty!</h5>
+            <a href="/" class="btn btn-success rounded-pill px-4 mt-2">Continue Shopping</a>
+        </div>
+
+        <form id="checkoutForm" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <div class="row g-4">
+                <!-- LEFT: Contact + Address + Payment -->
+                <div class="col-lg-7">
+                    <div class="card card-custom p-4 mb-4">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-id-card me-2 text-success"></i>Contact Information</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" id="fullName" class="form-control" placeholder="Enter full name" value="{{ request.user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Mobile Number *</label>
+                                <input type="tel" id="mobile" class="form-control" pattern="[0-9]{10}" placeholder="10-digit number" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Email Address *</label>
+                                <input type="email" id="email" class="form-control" placeholder="example@mail.com" value="{{ request.user.email }}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-custom p-4" id="addressSection">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-map-marker-alt me-2 text-success"></i>Shipping Address</h5>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Address *</label>
+                                <input type="text" id="address" class="form-control addr-field" placeholder="Street Address / Landmark" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">City *</label>
+                                <input type="text" id="city" class="form-control addr-field" placeholder="City" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Pincode *</label>
+                                <input type="text" id="pincode" class="form-control addr-field" pattern="[0-9]{6}" placeholder="Pincode (6 digits)" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-custom p-4 mt-4 bg-light border-success border text-success d-none"
+                         id="pickupBadge" style="border-style:dashed!important;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-store-alt fa-2x me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0">Self-Pickup Selected</h6>
+                                <p class="small mb-0">Pick up from our store. No delivery fee.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-custom p-4 mt-4">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-credit-card me-2 text-success"></i>Payment Method</h5>
+
+                        <div class="payment-option-card active" onclick="togglePayment('COD')">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="pay-COD" value="COD" checked>
+                                <label class="form-check-label fw-bold ms-2" for="pay-COD">💵 Cash on Delivery</label>
+                            </div>
+                        </div>
+
+                        <div class="payment-option-card" onclick="togglePayment('UPI')">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="pay-UPI" value="UPI">
+                                <label class="form-check-label fw-bold ms-2" for="pay-UPI">📱 UPI (GPay / PhonePe)</label>
+                            </div>
+                            <div id="upi-input-box" class="payment-details-box">
+                                <label class="form-label">UPI ID *</label>
+                                <input type="text" id="upi-id" class="form-control" placeholder="username@upi">
+                            </div>
+                        </div>
+
+                        <div class="payment-option-card" onclick="togglePayment('Card')">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="payment" id="pay-Card" value="Card">
+                                <label class="form-check-label fw-bold ms-2" for="pay-Card">💳 Credit / Debit Card</label>
+                            </div>
+                            <div id="card-input-box" class="payment-details-box">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label">Card Number *</label>
+                                        <input type="text" id="card-num" class="form-control" maxlength="19" placeholder="0000 0000 0000 0000">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Expiry (MM/YY) *</label>
+                                        <input type="text" id="card-expiry" class="form-control" maxlength="5" placeholder="MM/YY">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">CVV *</label>
+                                        <input type="password" id="card-cvv" class="form-control" maxlength="3" placeholder="***">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Order Summary -->
+                <div class="col-lg-5">
+                    <div class="card card-custom p-4 sticky-top" style="top:20px;">
+                        <h5 class="fw-bold mb-4 border-bottom pb-2 text-dark">
+                            Order Summary
+                            <span id="s-total-qty" class="badge bg-success rounded-pill ms-2 fs-6">0</span>
+                        </h5>
+
+                        <!-- ✅ FIX: items list populated by initCheckout() -->
+                        <div id="checkoutItemsList" class="product-list-container mb-3"></div>
+
+                        <div class="summary-item small"><span>Subtotal</span><span id="s-subtotal" class="fw-bold">₹0.00</span></div>
+                        <div class="summary-item small"><span>GST (3%)</span><span id="s-tax" class="text-danger">₹0.00</span></div>
+                        <div class="summary-item small" id="s-delivery-row"><span>Delivery (5%)</span><span id="s-delivery" class="text-primary">₹0.00</span></div>
+
+                        <hr class="my-3">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold m-0">Grand Total</h5>
+                            <h4 class="fw-bold text-success m-0" id="s-total">₹0.00</h4>
+                        </div>
+                        <button type="submit" id="btnPlaceOrder" class="btn btn-pay w-100 shadow-sm">
+                            PLACE ORDER <i class="fas fa-check-circle ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Success Modal -->
+<div id="successModal" class="modal fade" data-bs-backdrop="static">
+    <div class="modal-dialog modal-confirm modal-dialog-centered">
+        <div class="modal-content text-center">
+            <div class="icon-box"><i class="fas fa-check"></i></div>
+            <h3 class="fw-bold text-success">Order Placed! 🎉</h3>
+            <p class="text-muted mb-4">Your order has been recorded successfully. You will receive a confirmation shortly.</p>
+            <button class="btn btn-success w-100 rounded-pill py-2 fw-bold" onclick="finalizeOrder()">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initCheckout();
+    setupCardValidation();
+
+    const form = document.getElementById('checkoutForm');
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const cart = JSON.parse(localStorage.getItem('myCart')) || [];
+        if (cart.length === 0) { alert('Your cart is empty!'); return; }
+        if (!form.checkValidity()) { form.classList.add('was-validated'); window.scrollTo(0,0); return; }
+
+        const payType = document.querySelector('input[name="payment"]:checked').value;
+        if (payType === 'UPI' && !document.getElementById('upi-id').value.trim()) {
+            alert('Please enter your UPI ID'); return;
+        }
+        if (payType === 'Card') {
+            const cardNum = document.getElementById('card-num').value.replace(/\s/g,'');
+            if (cardNum.length < 16) { alert('Please enter a valid 16-digit Card Number'); return; }
+        }
+
+        const btn = document.getElementById('btnPlaceOrder');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing…';
+
+        const orderData = {
+            fullName:       document.getElementById('fullName').value,
+            mobile:         document.getElementById('mobile').value,
+            email:          document.getElementById('email').value,
+            address:        document.getElementById('address')?.value  || 'Self-Pickup',
+            city:           document.getElementById('city')?.value     || 'Local',
+            pincode:        document.getElementById('pincode')?.value  || '000000',
+            paymentMethod:  payType,
+            deliveryMethod: localStorage.getItem('deliveryMethod') || 'delivery',
+            totalAmount:    document.getElementById('s-total').innerText.replace(/[^0-9.]/g,''),
+            cart:           cart
+        };
+
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch('/place-order/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify(orderData)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                new bootstrap.Modal(document.getElementById('successModal')).show();
+            } else {
+                alert('Error: ' + data.message);
+                btn.disabled = false;
+                btn.innerHTML = 'PLACE ORDER';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Something went wrong!');
+            btn.disabled = false;
+            btn.innerHTML = 'PLACE ORDER';
+        });
+    });
+});
+
+// ── INIT CHECKOUT ────────────────────────────────
+function initCheckout() {
+    const cart           = JSON.parse(localStorage.getItem('myCart')) || [];
+    const deliveryMethod = localStorage.getItem('deliveryMethod') || 'delivery';
+    const isPickup       = deliveryMethod === 'pickup';
+    const listContainer  = document.getElementById('checkoutItemsList');
+
+    // Show empty-cart warning & hide form
+    if (cart.length === 0) {
+        document.getElementById('emptyCartAlert').classList.remove('d-none');
+        document.getElementById('checkoutForm').classList.add('d-none');
+        return;
+    }
+
+    if (isPickup) {
+        document.getElementById('addressSection').style.display = 'none';
+        document.getElementById('pickupBadge').classList.remove('d-none');
+        document.getElementById('s-delivery-row').classList.add('d-none');
+        document.querySelectorAll('.addr-field').forEach(el => el.removeAttribute('required'));
+    }
+
+    let subtotal = 0, totalQty = 0;
+    listContainer.innerHTML = '';
+
+    cart.forEach(item => {
+        // ✅ FIX: strip any ₹ or non-numeric chars before parsing
+        const price     = parseFloat(String(item.price).replace(/[^0-9.]/g, '')) || 0;
+        const qty       = parseInt(item.quantity || 1);
+        const lineTotal = price * qty;
+        subtotal  += lineTotal;
+        totalQty  += qty;
+
+        // ✅ FIX: show product image in checkout summary
+        const imgSrc = item.image || 'https://placehold.co/50x50?text=img';
+
+        listContainer.innerHTML += `
+            <div class="product-card d-flex align-items-center gap-3">
+                <img src="${imgSrc}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;"
+                     onerror="this.src='https://placehold.co/50x50'" alt="${item.name}">
+                <div class="flex-grow-1">
+                    <strong class="product-name-header">${item.name}</strong>
+                    <div class="product-meta">
+                        <span>Qty: <b>${qty}</b></span>
+                        <span class="fw-bold text-dark">₹${lineTotal.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>`;
+    });
+
+    const tax      = subtotal * 0.03;
+    const delivery = isPickup ? 0 : subtotal * 0.05;
+    const grandTotal = subtotal + tax + delivery;
+
+    const fmt = n => '₹' + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+    document.getElementById('s-total-qty').innerText = totalQty;
+    document.getElementById('s-subtotal').innerText  = fmt(subtotal);
+    document.getElementById('s-tax').innerText       = fmt(tax);
+    document.getElementById('s-delivery').innerText  = fmt(delivery);
+    document.getElementById('s-total').innerText     = fmt(grandTotal);
+}
+
+// ── PAYMENT TOGGLE ───────────────────────────────
+function togglePayment(type) {
+    document.querySelectorAll('.payment-option-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.payment-details-box').forEach(b => b.style.display = 'none');
+    const radio = document.getElementById('pay-' + type);
+    radio.checked = true;
+    radio.closest('.payment-option-card').classList.add('active');
+    if (type === 'UPI')  document.getElementById('upi-input-box').style.display  = 'block';
+    if (type === 'Card') document.getElementById('card-input-box').style.display = 'block';
+}
+
+// ── CARD INPUT FORMATTING ────────────────────────
+function setupCardValidation() {
+    const cardNum    = document.getElementById('card-num');
+    const cardExpiry = document.getElementById('card-expiry');
+    cardNum?.addEventListener('input', e => {
+        let val = e.target.value.replace(/\D/g,'');
+        e.target.value = (val.match(/.{1,4}/g)||[]).join(' ').substring(0,19);
+    });
+    cardExpiry?.addEventListener('input', e => {
+        let val = e.target.value.replace(/\D/g,'');
+        if (val.length > 2) val = val.substring(0,2) + '/' + val.substring(2,4);
+        e.target.value = val;
+    });
+}
+
+// ── FINALIZE ─────────────────────────────────────
+function finalizeOrder() {
+    localStorage.removeItem('myCart');
+    window.location.href = "{% url 'index' %}";
+}
+</script>
+{% endblock %}

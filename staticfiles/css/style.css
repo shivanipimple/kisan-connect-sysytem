@@ -1,0 +1,39 @@
+ :root {
+            --primary-green: #28a745;
+            --dark-blue: #1e2d3b;
+            --accent-orange: #ffb524;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        
+        /* Navbar Customization */
+        .navbar-brand { font-weight: 700; font-size: 1.8rem; color: var(--primary-green) !important; }
+        .nav-link { font-weight: 500; color: var(--dark-blue); transition: 0.3s; }
+        .nav-link:hover { color: var(--primary-green) !important; }
+        
+        /* Icon Buttons & Badges */
+        .action-btn { position: relative; color: var(--dark-blue); font-size: 1.3rem; margin-right: 20px; text-decoration: none; transition: 0.3s; border: none; background: none; }
+        .action-btn:hover { color: var(--primary-green); }
+        .badge-count { position: absolute; top: -5px; right: -10px; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; transition: 0.3s; }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1400&q=80');
+            background-size: cover; background-position: center; height: 70vh;
+            display: flex; align-items: center; color: white;
+        }
+
+        /* Category Tabs */
+        .nav-pills .nav-link { color: var(--dark-blue); border: 1px solid #dee2e6; margin: 0 5px; border-radius: 50px; }
+        .nav-pills .nav-link.active { background-color: var(--primary-green) !important; border-color: var(--primary-green); }
+
+        .product-card { transition: 0.3s; border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; }
+        .product-card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .wishlist-icon { position: absolute; top: 15px; right: 15px; color: #ccc; cursor: pointer; font-size: 1.2rem; transition: 0.3s; z-index: 10; }
+        .wishlist-icon.active { color: #e74c3c; }
+
+        footer { background-color: var(--dark-blue); color: #ecf0f1; }
+        .modal-header { background-color: var(--primary-green); color: white; border-radius: 15px 15px 0 0; }
+        .rounded-input { border-radius: 10px !important; }
+        .error-text { color: red; font-size: 0.8rem; display: none; margin-top: 5px; }
+    

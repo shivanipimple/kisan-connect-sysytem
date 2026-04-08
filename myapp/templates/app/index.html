@@ -1,0 +1,92 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+
+<section class="hero-section text-center py-5 bg-light">
+    <div class="container">
+        <h1 class="display-3 fw-bold mb-3">Pure Seeds, Better Yield</h1>
+        <p class="lead mb-4">Empowering farmers with modern technology and high-quality products.</p>
+        <a href="#popular-products" class="btn btn-success btn-lg rounded-pill px-5">Explore Now</a>
+    </div>
+</section>
+ 
+<section id="popular-products" class="py-5">
+    <div class="container">
+        <h2 class="text-center fw-bold mb-5">Our Popular Products</h2>
+        
+        <ul class="nav nav-pills justify-content-center mb-5" id="pills-tab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-all">All</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-organic">Organic</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-seeds">Seeds</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-fert">Fertilizers</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-pest">Pesticides</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-tools">Tools</button></li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+            
+            <div class="tab-pane fade show active" id="tab-all">
+                <div class="row g-4">
+                    {% for product in products %}
+                        {% with tab_id="all" %}{% include "app/product_card.html" %}{% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-organic">
+                <div class="row g-4">
+                    {% for product in products %}
+                        {% if product.category == 'Organic' %}
+                            {% with tab_id="org" %}{% include "app/product_card.html" %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-seeds">
+                <div class="row g-4">
+                    {% for product in products %}
+                        {% if product.category == 'Seeds' %}
+                            {% with tab_id="seed" %}{% include "app/product_card.html" %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div> 
+            </div>      
+
+            <div class="tab-pane fade" id="tab-fert">
+                <div class="row g-4">
+                    {% for product in products %}
+                        {% if product.category == 'Fertilizer' %}
+                            {% with tab_id="fert" %}{% include "app/product_card.html" %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div> 
+            </div> 
+
+            <div class="tab-pane fade" id="tab-pest">
+                <div class="row g-4">
+                    {% for product in products %}
+                        {% if product.category == 'Pesticides' %}
+                            {% with tab_id="pest" %}{% include "app/product_card.html" %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div> 
+            </div>
+
+            <div class="tab-pane fade" id="tab-tools">
+                <div class="row g-4">
+                    {% for product in products %}
+                        {% if product.category == 'Tools' %}
+                            {% with tab_id="tool" %}{% include "app/product_card.html" %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div> 
+            </div>
+
+        </div> 
+    </div> 
+</section>
+
+
+ 
+{% endblock %}

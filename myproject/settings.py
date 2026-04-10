@@ -166,7 +166,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # EMAIL_USE_TLS     = True   # Port 587 uses TLS — correct
 # EMAIL_USE_SSL     = False  # NEVER True when EMAIL_USE_TLS is True
 # EMAIL_HOST_USER   = 'shivanipimpe99@gmail.com'
-# EMAIL_HOST_PASSWORD = 'ckbp xbsm ykem gfug'  # Gmail App Password (16 chars)
+# EMAIL_HOST_PASSWORD = ''  # Gmail App Password (16 chars)
 # DEFAULT_FROM_EMAIL  = 'shivanipimpe99@gmail.com'
 # EMAIL_TIMEOUT     = 30
 # # ============================================================
